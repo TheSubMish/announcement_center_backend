@@ -19,6 +19,7 @@ urlpatterns = [
     ),
     path(f'{api_prefix}/', include([
         path('v1/', include([
+            path('user/',include('src.apps.auth.urls')),
         ]))
     ]))
 ]

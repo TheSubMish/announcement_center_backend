@@ -14,3 +14,8 @@ def image_validate(image):
         pass
     else:
         raise ValidationError("Image is not provided")
+    
+def get_user_ip(request):
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+    ip = request.META.get("REMOTE_ADDR")
+    return x_forwarded_for if x_forwarded_for else ip
