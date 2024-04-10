@@ -1,6 +1,7 @@
-from rest_framework import serializers
+from rest_framework import serializers,exceptions
 from src.apps.auth.models import User
 from django.db import transaction
+from src.apps.common.otp import OTPhandlers,OTPAction
 
 class UserRegisterSerializer(serializers.ModelSerializer):
 
@@ -51,6 +52,36 @@ class UserLoginSerializer(serializers.Serializer):
 
         return attrs
     
+class VerifyLoginOTPSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=255,required=True,allow_blank=False)
+    otp = serializers.CharField(max_length=255,required=True,allow_blank=False)
+
+    def validate(self, attrs):
+        username = attrs.get('username',None)
+        otp = attrs.get('otp',None)
+
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            attrs['user'] = None
+            raise exceptions.APIException("User does not exist")
+        
+        otp_handlers = OTPhandlers(
+            request=self.context['request'],
+            user=user,
+            action=OTPAction.LOGIN,
+        )
+
+        verified,message = otp_handlers.verify_otp(otp)
+
+        if not verified:
+            raise serializers.ValidationError(message)
+        
+        attrs['user'] = user
+        attrs['message'] = message
+
+        return super().validate(attrs)
+    
 class UserLogoutSerializer(serializers.Serializer):
 
     refresh = serializers.CharField(max_length=255,required=True,allow_blank=False)
@@ -81,10 +112,12 @@ class UserSerializer(serializers.ModelSerializer):
     
 
 class UserChangePasswordSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=255,required=True,allow_blank=False)
     old_password = serializers.CharField(max_length=255,required=True,allow_blank=False)
     new_password = serializers.CharField(max_length=255,required=True,allow_blank=False)
 
     def validate(self, attrs):
+        username = attrs.get('username',None)
         old_password = attrs.get('old_password',None)
         new_password = attrs.get('new_password',None)
 
@@ -92,7 +125,7 @@ class UserChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError({'msg':'Old password or new password missing'})
         
         try:
-            user : User = User.objects.get(username=self.context['request'].user.username)
+            user : User = User.objects.get(username=username)
         except User.DoesNotExist:
             raise serializers.ValidationError({'msg':'Invalid username or password'})
         
@@ -101,6 +134,9 @@ class UserChangePasswordSerializer(serializers.Serializer):
         
         user.set_password(new_password)
         user.save()
+
+        attrs['user'] = user
+
         return attrs
     
 class ForgotPasswordSerializer(serializers.Serializer):
@@ -114,8 +150,68 @@ class ForgotPasswordSerializer(serializers.Serializer):
         
         try:
             user : User = User.objects.get(email=email)
+            attrs['user'] = user
+        except User.DoesNotExist:
+            attrs['user'] = None
+            raise serializers.ValidationError({'msg':'Invalid username or password'})
+
+        return attrs
+    
+class VerifyForgotPasswordSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=255,required=True,allow_blank=False)
+    otp = serializers.CharField(max_length=255,required=True,allow_blank=False)
+
+    def validate(self, attrs):
+        username = attrs.get('username',None)
+        otp = attrs.get('otp',None)
+
+        try:
+            user = User.objects.get(username=username)
+            attrs['user'] = user
+        except User.DoesNotExist:
+            attrs['user'] = None
+            raise exceptions.APIException("User does not exist")
+        
+        otp_handlers = OTPhandlers(
+            request=self.context['request'],
+            user=user,
+            action=OTPAction.RESET,
+        )
+        verified,message = otp_handlers.verify_otp(otp)
+
+        if not verified:
+            raise serializers.ValidationError(message)
+        
+        print(message)
+        
+        attrs['message'] = message
+
+        return super().validate(attrs)
+    
+class ChangeForgotPasswordSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=255,required=True,allow_blank=False)
+    old_password = serializers.CharField(max_length=255,required=True,allow_blank=False)
+    new_password = serializers.CharField(max_length=255,required=True,allow_blank=False)
+
+    def validate(self, attrs):
+        username = attrs.get('username',None)
+        old_password = attrs.get('old_password',None)
+        new_password = attrs.get('new_password',None)
+
+        if old_password is None or new_password is None:
+            raise serializers.ValidationError({'msg':'Old password or new password missing'})
+        
+        try:
+            user : User = User.objects.get(username=username)
         except User.DoesNotExist:
             raise serializers.ValidationError({'msg':'Invalid username or password'})
         
-        user.send_password_reset_email()
+        if not user.check_password(old_password):
+            raise serializers.ValidationError({'msg':'Invalid username or password'})
+        
+        user.set_password(new_password)
+        user.save()
+
+        attrs['user'] = user
+
         return attrs

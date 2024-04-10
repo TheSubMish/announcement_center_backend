@@ -4,8 +4,12 @@ from .serializers import (
     UserRegisterSerializer,
     UserLoginSerializer,
     UserLogoutSerializer,
+    VerifyLoginOTPSerializer,
     UserSerializer,
-    UserChangePasswordSerializer
+    UserChangePasswordSerializer,
+    ForgotPasswordSerializer,
+    VerifyForgotPasswordSerializer,
+    ChangeForgotPasswordSerializer,
 )
 from rest_framework.response import Response
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -13,6 +17,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User,Device
 from src.apps.common.utills import get_user_ip
+from src.apps.common.otp import OTPhandlers,OTPAction
 import geocoder
 
 
@@ -76,8 +81,35 @@ class UserLoginView(generics.GenericAPIView):
 
             return Response({'refresh':str(token),'access': str(token.access_token),'msg':'User logged in successful'},status=status.HTTP_200_OK)
         else:
-            return Response({'msg':'Email not verified'},status=status.HTTP_400_BAD_REQUEST)
+            otp_handler = OTPhandlers(request,user,OTPAction.LOGIN)
+            otp_handler.send_otp()
+            return Response({'msg':'Login OTP has been sent to your email address'},status=status.HTTP_200_OK)
         
+
+class VerifyLoginOTPView(generics.GenericAPIView):
+
+    serializer_class = VerifyLoginOTPSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.validated_data.get('user',None)
+
+        if user is not None:
+            token = TokenObtainPairSerializer.get_token(user)
+
+            return Response(
+                {
+                   'refresh':str(token),
+                    'access': str(token.access_token),
+                   'msg':'OTP verified successfully'
+                },
+                status=status.HTTP_200_OK
+            )
+
+        return Response({'msg':'OTP verification failed'},status=status.HTTP_400_BAD_REQUEST)
+    
 
 class UserLogoutView(generics.GenericAPIView):
     serializer_class = UserLogoutSerializer
@@ -102,6 +134,21 @@ class UserLogoutView(generics.GenericAPIView):
         except Exception as e:
             raise exceptions.APIException({'error': str(e)},status=status.HTTP_400_BAD_REQUEST)
 
+class UserRetrieveView(generics.RetrieveAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        id = self.kwargs.get('pk', None)
+        try:
+            user = User.objects.get(id=id)
+        except User.DoesNotExist:
+            raise exceptions.APIException({'error': 'User does not exist'})
+        
+        return user
+    
+    def get_queryset(self):
+        return User.objects.all()
 
 class UserDetailsView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
@@ -133,13 +180,82 @@ class UserUpdateView(generics.UpdateAPIView):
         return User.objects.all()
     
     
-class UserChangePasswordView(generics.RetrieveAPIView):
+class UserChangePasswordView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UserChangePasswordSerializer
 
     def post(self,request,*args,**kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        return Response({'msg':'Password changed successfully'},status=status.HTTP_200_OK)
+
+        user = serializer.validated_data.get('user',None)
+
+        if user is not None:
+            token = TokenObtainPairSerializer.get_token(user)
+
+            return Response(
+                {
+                   'refresh':str(token),
+                    'access': str(token.access_token),
+                   'msg':'Password changed successfully'
+                },
+                status=status.HTTP_200_OK
+            )
+
+        return Response({'msg':'Password not changed'},status=status.HTTP_200_OK)
     
 
+class ForgotPasswordView(generics.GenericAPIView):
+
+    serializer_class = ForgotPasswordSerializer
+
+    def post(self,request,*args,**kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data.get('user',None)
+
+        if user is not None:
+            otp_handler = OTPhandlers(request,user,OTPAction.RESET)
+            otp_handler.send_otp()
+
+            return Response({'msg':'Reset OTP has been sent to your email address'},status=status.HTTP_200_OK)
+
+        return Response({'msg':'Something went wrong'},status=status.HTTP_400_BAD_REQUEST)
+    
+
+class VerifyForgotPasswordView(generics.GenericAPIView):
+
+    serializer_class = VerifyForgotPasswordSerializer
+
+    def post(self,request,*args,**kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        message = serializer.validated_data.get('message',None)
+
+        return Response({'msg':message},status=status.HTTP_200_OK)
+    
+
+class ChangeForgotPasswordView(generics.GenericAPIView):
+
+    serializer_class = ChangeForgotPasswordSerializer
+
+    def post(self,request,*args,**kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.validated_data.get('user',None)
+
+        if user is not None:
+            token = TokenObtainPairSerializer.get_token(user)
+
+            return Response(
+                {
+                   'refresh':str(token),
+                    'access': str(token.access_token),
+                   'msg':'Password changed successfully'
+                },
+                status=status.HTTP_200_OK
+            )
+
+        return Response({'msg':'Password not changed'},status=status.HTTP_200_OK)
