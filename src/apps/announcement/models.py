@@ -9,9 +9,6 @@ class PaymentMethod(models.TextChoices):
     ESEWA = 'e-sewa','E-SEWA'
     PAYPAL = 'paypal','Paypal'
 
-
-
-
 class Announcement(BaseModel,UserModelMixin,GroupModelMixin):
     title = models.CharField(max_length=255,null=False, blank=False)
     description = models.TextField(null=False,blank=False)

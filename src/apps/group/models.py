@@ -19,7 +19,7 @@ class Category(models.TextChoices):
     OTHER = 'other','Other'
 
 # Create your models here.
-class Group(Group):
+class AnnouncementGroup(Group):
     group_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     description = models.TextField(null=False,blank=False)
     image = models.ImageField(default='',validators=[image_validate])
@@ -31,6 +31,7 @@ class Group(Group):
         choices=Category.choices,
         default=Category.WEB,
     )
+    rating = models.FloatField(default=0)
     members = models.ManyToManyField(User)
     total_members = models.IntegerField(default=1)
 
@@ -41,7 +42,7 @@ class Group(Group):
         return self.name
     
 class GroupModelMixin(models.Model):
-    group = models.ForeignKey(Group,on_delete=models.CASCADE)
+    group = models.ForeignKey(AnnouncementGroup,on_delete=models.CASCADE)
 
     class Meta:
         abstract = True
