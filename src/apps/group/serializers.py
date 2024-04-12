@@ -52,6 +52,7 @@ class UpdateAnnouncementGroupSerializer(serializers.ModelSerializer):
     
 
 class AnnouncementGroupSerializer(serializers.ModelSerializer):
+    joined = serializers.SerializerMethodField()
 
     class Meta:
         model = AnnouncementGroup
@@ -61,6 +62,7 @@ class AnnouncementGroupSerializer(serializers.ModelSerializer):
             'description', 
             'image', 
             'category',
+            'joined',
             'admin_id',
             'members',
             'total_members',
@@ -68,8 +70,15 @@ class AnnouncementGroupSerializer(serializers.ModelSerializer):
             'created_at'
         )
 
+    def get_joined(self,obj):
+        member = self.context['request'].user
+        if member and member.is_authenticated:
+            return member in obj.members.all()
+
+        return False
+
 class JoinAnnouncementGroupsSerializer(serializers.Serializer):
-    group_id = serializers.UUIDField(required=True,allow_blank=False)
+    group_id = serializers.UUIDField(required=True)
 
     def validate(self, attrs):
         group_id = attrs.get('group_id',None)

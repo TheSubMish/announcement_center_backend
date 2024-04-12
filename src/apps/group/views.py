@@ -4,6 +4,7 @@ from .serializers import (
     CreateAnnouncementGroupSerializer,
     UpdateAnnouncementGroupSerializer,
     AnnouncementGroupSerializer,
+    JoinAnnouncementGroupsSerializer
 )
 from .permissions import (
     CanCreateAnnouncementGroup,
@@ -49,8 +50,6 @@ class UpdateAnnouncementGroupView(generics.UpdateAPIView):
         group_id = self.kwargs['pk']
         try:
             announcement_group = AnnouncementGroup.objects.get(group_id=group_id)
-            print(self.request.user.id)
-            print(announcement_group.admin_id)
         except AnnouncementGroup.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement group does not exist'})
         return announcement_group
@@ -91,7 +90,7 @@ class ListUserCreatedAnnouncementGroupView(generics.ListAPIView):
 
 class JoinAnnouncementGroupView(generics.GenericAPIView):
     permission_classes = [CanViewAnnouncementGroup]
-    serializer_class = AnnouncementGroupSerializer
+    serializer_class = JoinAnnouncementGroupsSerializer
 
     def post(self, request, *args, **kwargs):
 
@@ -99,7 +98,15 @@ class JoinAnnouncementGroupView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
 
         group = serializer.validated_data.get('group')
-        group.members.add(self.request.user)
+        if group is None:
+            raise exceptions.ValidationError({'group': 'This field is required.'})
+        
+        user = self.request.user
+        if user in group.members.all():
+            raise exceptions.APIException('User already in group')
+        
+        group.members.add(user)
+        group.total_members += 1
         group.save()
 
         return Response({'msg':'Successfully joined the announcement group'},status=status.HTTP_200_OK)
