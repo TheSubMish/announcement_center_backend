@@ -12,6 +12,7 @@ from .permissions import (
     CanDeleteAnnouncementGroup,
     CanViewAnnouncementGroup,
 )
+from .filters import AnnouncementGroupFilter
 from .models import AnnouncementGroup
 from drf_spectacular.utils import extend_schema
 
@@ -20,16 +21,16 @@ class CreateAnnouncementGroupView(generics.CreateAPIView):
     serializer_class = CreateAnnouncementGroupSerializer
     
     @extend_schema(
-            responses={
-                "application/json": {
-                    "example": {
-                        "name":"string",
-                        "description":"string",
-                        "imgae": "image file",
-                        "category": "string"
-                    }
+        responses={
+            "application/json": {
+                "example": {
+                    "name":"string",
+                    "description":"string",
+                    "imgae": "image file",
+                    "category": "string"
                 }
             }
+        }
     )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -72,21 +73,73 @@ class DestroyAnnouncementGroupView(generics.DestroyAPIView):
     
 class ListAnnouncementGroupView(generics.ListAPIView):
     permission_classes = [CanViewAnnouncementGroup]
+    queryset = AnnouncementGroup.objects.all()
     serializer_class = AnnouncementGroupSerializer
+    filterset_class = AnnouncementGroupFilter
 
-    def get_queryset(self):
-        return AnnouncementGroup.objects.all()
-    
+    @extend_schema(
+        responses={
+            "application/json": {
+                "example": {
+                    'group_id':'string (uuid)',
+                    'name':'string',
+                    'description':'string', 
+                    'image':'image file', 
+                    'category':'string',
+                    'joined':'boolean',
+                    'admin_id':'string(uuid)',
+                    'members':'array of user id',
+                    'total_members':'number',
+                    'rating':'float',
+                    'created_at':'Date time'
+                }
+            }
+        }
+    )
+    def get(self, request, *args, **kwargs):
+        qs = AnnouncementGroup.objects.all()
+        page = self.paginate_queryset(qs)
+        serializer = self.get_serializer(page,many=True)
+        return self.get_paginated_response(serializer.data)
+        
 
 class ListUserCreatedAnnouncementGroupView(generics.ListAPIView):
     permission_classes = [CanViewAnnouncementGroup]
+    queryset = AnnouncementGroup.objects.all()
     serializer_class = AnnouncementGroupSerializer
+    filterset_class = AnnouncementGroupFilter
 
     def get_queryset(self):
         admin_id = self.request.user.id
         qs = AnnouncementGroup.objects.filter(admin_id=admin_id)
         return qs
     
+    @extend_schema(
+        responses={
+            "application/json": {
+                "example": {
+                    'group_id':'string (uuid)',
+                    'name':'string',
+                    'description':'string', 
+                    'image':'image file', 
+                    'category':'string',
+                    'joined':'boolean',
+                    'admin_id':'string(uuid)',
+                    'members':'array of user id',
+                    'total_members':'number',
+                    'rating':'float',
+                    'created_at':'Date time'
+                }
+            }
+        }
+    )
+    def get(self, request, *args, **kwargs):
+        admin_id = self.request.user.id
+        qs = AnnouncementGroup.objects.filter(admin_id=admin_id)
+        page = self.paginate_queryset(qs)
+        serializer = self.get_serializer(page,many=True)
+        return self.get_paginated_response(serializer.data)
+
 
 class JoinAnnouncementGroupView(generics.GenericAPIView):
     permission_classes = [CanViewAnnouncementGroup]
@@ -102,6 +155,9 @@ class JoinAnnouncementGroupView(generics.GenericAPIView):
             raise exceptions.ValidationError({'group': 'This field is required.'})
         
         user = self.request.user
+        if user is None:
+            raise exceptions.APIException('User is not logged in')
+        
         if user in group.members.all():
             raise exceptions.APIException('User already in group')
         
@@ -110,3 +166,62 @@ class JoinAnnouncementGroupView(generics.GenericAPIView):
         group.save()
 
         return Response({'msg':'Successfully joined the announcement group'},status=status.HTTP_200_OK)
+
+
+class ListUserJoinedAnnouncementGroupView(generics.GenericAPIView):
+    permission_classes = [CanViewAnnouncementGroup]
+    queryset = AnnouncementGroup.objects.all()
+    serializer_class = AnnouncementGroupSerializer
+    filterset_class = AnnouncementGroupFilter
+
+    @extend_schema(
+        responses={
+            "application/json": {
+                "example": {
+                    'group_id':'string (uuid)',
+                    'name':'string',
+                    'description':'string', 
+                    'image':'image file', 
+                    'category':'string',
+                    'joined':'boolean',
+                    'admin_id':'string(uuid)',
+                    'members':'array of user id',
+                    'total_members':'number',
+                    'rating':'float',
+                    'created_at':'Date time'
+                }
+            }
+        }
+    )
+    def get(self, request, *args, **kwargs):
+        user = self.request.user
+        qs = AnnouncementGroup.objects.filter(members=user)
+        page = self.paginate_queryset(qs)
+        serializer = self.get_serializer(page,many=True)
+        return self.get_paginated_response(serializer.data)
+    
+
+class LeaveAnnouncementGroupView(generics.GenericAPIView):
+    permission_classes = [CanViewAnnouncementGroup]
+    serializer_class = JoinAnnouncementGroupsSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        group = serializer.validated_data.get('group')
+        if group is None:
+            raise exceptions.ValidationError({'group': 'This field is required.'})
+        
+        user = self.request.user
+        if user is None:
+            raise exceptions.APIException('User is not logged in')
+        
+        if user not in group.members.all():
+            raise exceptions.APIException('User not found group in group')
+
+        group.members.remove(user)
+        group.total_members -= 1
+        group.save()
+
+        return Response({'msg':'Successfully left the announcement group'},status=status.HTTP_200_OK)

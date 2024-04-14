@@ -5,7 +5,9 @@ from .views import (
     DestroyAnnouncementGroupView,
     ListAnnouncementGroupView,
     ListUserCreatedAnnouncementGroupView,
-    JoinAnnouncementGroupView
+    JoinAnnouncementGroupView,
+    ListUserJoinedAnnouncementGroupView,
+    LeaveAnnouncementGroupView
 )
 
 urlpatterns = [
@@ -13,6 +15,8 @@ urlpatterns = [
     path('update/<uuid:pk>/',UpdateAnnouncementGroupView.as_view(),name='update-announcement-group-api'),
     path('delete/<uuid:pk>/',DestroyAnnouncementGroupView.as_view(),name='destroy-announcement-group-api'),
     path('list/',ListAnnouncementGroupView.as_view(),name='list-announcement-group-api'),
-    path('list/created/',ListUserCreatedAnnouncementGroupView.as_view(),name='list-user-created-announcement-group'),
+    path('created-by/user/',ListUserCreatedAnnouncementGroupView.as_view(),name='list-user-created-announcement-group-api'),
     path('join/',JoinAnnouncementGroupView.as_view(),name='join-announcement-group-api'),
+    path('joined-by/user/',ListUserJoinedAnnouncementGroupView.as_view(),name='list-group-joined-by-user-api'),
+    path('leave/',LeaveAnnouncementGroupView.as_view(),name='leave-announcement-group-api'),
 ]
