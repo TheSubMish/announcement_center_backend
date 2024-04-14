@@ -1,7 +1,7 @@
 from django.db import models
 from src.apps.common.models import BaseModel
 from src.apps.common.utills import image_validate
-from src.apps.auth.models import UserModelMixin
+from src.apps.auth.models import UserModelMixin,User
 from src.apps.group.models import GroupModelMixin
 
 class PaymentMethod(models.TextChoices):
@@ -25,3 +25,11 @@ class Announcement(BaseModel,UserModelMixin,GroupModelMixin):
 
     def __str__(self):
         return self.title
+    
+class AnnouncementComment(BaseModel):
+    announcement = models.ForeignKey(Announcement,on_delete=models.CASCADE)
+    user = models.ForeignKey(User,on_delete=models.CASCADE)
+    comment = models.CharField(max_length=255,null=False,blank=False)
+
+    def __str__(self):
+        return self.user.username

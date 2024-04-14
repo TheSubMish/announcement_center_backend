@@ -73,7 +73,6 @@ class DestroyAnnouncementGroupView(generics.DestroyAPIView):
         return announcement_group
     
 class ListAnnouncementGroupView(generics.ListAPIView):
-    permission_classes = [CanViewAnnouncementGroup]
     queryset = AnnouncementGroup.objects.all()
     serializer_class = AnnouncementGroupSerializer
     filterset_class = AnnouncementGroupFilter
@@ -105,7 +104,18 @@ class ListAnnouncementGroupView(generics.ListAPIView):
         page = self.paginate_queryset(qs)
         serializer = self.get_serializer(page,many=True)
         return self.get_paginated_response(serializer.data)
-        
+    
+class RetrieveAnnouncementGroupView(generics.RetrieveAPIView):
+    queryset = AnnouncementGroup.objects.all()
+    serializer_class = AnnouncementGroupSerializer
+    
+    def get_object(self):
+        group_id = self.kwargs['pk']
+        try:
+            announcement_group = AnnouncementGroup.objects.get(group_id=group_id)
+        except AnnouncementGroup.DoesNotExist:
+            raise exceptions.APIException({'error': 'Announcement group does not exist'})
+        return announcement_group
 
 class ListUserCreatedAnnouncementGroupView(generics.ListAPIView):
     permission_classes = [CanViewAnnouncementGroup]
