@@ -1,5 +1,5 @@
 from rest_framework import serializers,exceptions
-from src.apps.group.models import AnnouncementGroup
+from src.apps.group.models import AnnouncementGroup,Rating
 
 class CreateAnnouncementGroupSerializer(serializers.ModelSerializer):
 
@@ -53,6 +53,7 @@ class UpdateAnnouncementGroupSerializer(serializers.ModelSerializer):
 
 class AnnouncementGroupSerializer(serializers.ModelSerializer):
     joined = serializers.SerializerMethodField()
+    average_rating = serializers.SerializerMethodField()
 
     class Meta:
         model = AnnouncementGroup
@@ -62,20 +63,26 @@ class AnnouncementGroupSerializer(serializers.ModelSerializer):
             'description', 
             'image', 
             'category',
+            'average_rating',
             'joined',
             'admin_id',
             'members',
             'total_members',
-            'rating',
             'created_at'
         )
 
     def get_joined(self,obj):
+        print('inside average rating')
         member = self.context['request'].user
         if member and member.is_authenticated:
             return member in obj.members.all()
 
         return False
+    
+    def get_average_rating(self, obj):
+        print('inside average rating')
+        average_rating = obj.average_rating()  # Call the method from the model
+        return average_rating if average_rating else 0.0
 
 class JoinAnnouncementGroupsSerializer(serializers.Serializer):
     group_id = serializers.UUIDField(required=True)
@@ -94,3 +101,47 @@ class JoinAnnouncementGroupsSerializer(serializers.Serializer):
             raise exceptions.APIException("Group does not exist")
 
         return attrs
+    
+class RatingSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Rating
+        fields = '__all__'
+
+    def validate(self, attrs):
+        group = attrs.get('group',None)
+        user = attrs.get('user',None)
+        rating = attrs.get('rating',None)
+
+        if group is None:
+            raise exceptions.ValidationError({'group': 'This field is required.'})
+        
+        if user is None:
+            raise exceptions.ValidationError({'user': 'This field is required.'})
+        
+        attrs['group'] = group
+        attrs['user'] = user
+        attrs['rating'] = rating
+        
+        return attrs
+
+        
+    def create(self, validated_data):
+        group = validated_data.get('group',None)
+        user = validated_data.get('user',None)
+        rating = validated_data.get('rating',None)
+
+        rating = Rating.objects.create(
+            group=group,
+            user=user,
+            rating=rating,
+        )
+        return rating
+    
+
+    def update(self, instance, validated_data):
+        instance.group = validated_data.get('group',instance.group)
+        instance.user = validated_data.get('user',instance.user)
+        instance.rating = validated_data.get('rating',instance.rating)
+        instance.save()
+        return instance

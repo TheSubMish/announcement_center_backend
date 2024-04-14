@@ -7,7 +7,9 @@ from .views import (
     ListUserCreatedAnnouncementGroupView,
     JoinAnnouncementGroupView,
     ListUserJoinedAnnouncementGroupView,
-    LeaveAnnouncementGroupView
+    LeaveAnnouncementGroupView,
+    GiveRatingView,
+    RetrieveRatingView,
 )
 
 urlpatterns = [
@@ -19,4 +21,6 @@ urlpatterns = [
     path('join/',JoinAnnouncementGroupView.as_view(),name='join-announcement-group-api'),
     path('joined-by/user/',ListUserJoinedAnnouncementGroupView.as_view(),name='list-group-joined-by-user-api'),
     path('leave/',LeaveAnnouncementGroupView.as_view(),name='leave-announcement-group-api'),
+    path('give/rating/',GiveRatingView.as_view(),name='give-rating-api'),
+    path('<uuid:pk>/retrieve/rating/',RetrieveRatingView.as_view(),name='retrieve-rating-api'),
 ]

@@ -1,10 +1,11 @@
-from rest_framework import generics,exceptions,status
+from rest_framework import generics,exceptions,status,permissions
 from rest_framework.response import Response
 from .serializers import (
     CreateAnnouncementGroupSerializer,
     UpdateAnnouncementGroupSerializer,
     AnnouncementGroupSerializer,
-    JoinAnnouncementGroupsSerializer
+    JoinAnnouncementGroupsSerializer,
+    RatingSerializer,
 )
 from .permissions import (
     CanCreateAnnouncementGroup,
@@ -13,7 +14,7 @@ from .permissions import (
     CanViewAnnouncementGroup,
 )
 from .filters import AnnouncementGroupFilter
-from .models import AnnouncementGroup
+from .models import AnnouncementGroup,Rating
 from drf_spectacular.utils import extend_schema
 
 class CreateAnnouncementGroupView(generics.CreateAPIView):
@@ -77,6 +78,9 @@ class ListAnnouncementGroupView(generics.ListAPIView):
     serializer_class = AnnouncementGroupSerializer
     filterset_class = AnnouncementGroupFilter
 
+    def get_queryset(self):
+        return AnnouncementGroup.objects.all()
+
     @extend_schema(
         responses={
             "application/json": {
@@ -85,12 +89,12 @@ class ListAnnouncementGroupView(generics.ListAPIView):
                     'name':'string',
                     'description':'string', 
                     'image':'image file', 
+                    'average_rating':'float',
                     'category':'string',
                     'joined':'boolean',
                     'admin_id':'string(uuid)',
                     'members':'array of user id',
                     'total_members':'number',
-                    'rating':'float',
                     'created_at':'Date time'
                 }
             }
@@ -123,11 +127,11 @@ class ListUserCreatedAnnouncementGroupView(generics.ListAPIView):
                     'description':'string', 
                     'image':'image file', 
                     'category':'string',
+                    'average_rating':'float',
                     'joined':'boolean',
                     'admin_id':'string(uuid)',
                     'members':'array of user id',
                     'total_members':'number',
-                    'rating':'float',
                     'created_at':'Date time'
                 }
             }
@@ -174,6 +178,11 @@ class ListUserJoinedAnnouncementGroupView(generics.GenericAPIView):
     serializer_class = AnnouncementGroupSerializer
     filterset_class = AnnouncementGroupFilter
 
+    def get_queryset(self):
+        user = self.request.user
+        qs = AnnouncementGroup.objects.filter(members__pk=user.pk)
+        return qs
+
     @extend_schema(
         responses={
             "application/json": {
@@ -183,11 +192,11 @@ class ListUserJoinedAnnouncementGroupView(generics.GenericAPIView):
                     'description':'string', 
                     'image':'image file', 
                     'category':'string',
+                    'average_rating':'float',
                     'joined':'boolean',
                     'admin_id':'string(uuid)',
                     'members':'array of user id',
                     'total_members':'number',
-                    'rating':'float',
                     'created_at':'Date time'
                 }
             }
@@ -225,3 +234,44 @@ class LeaveAnnouncementGroupView(generics.GenericAPIView):
         group.save()
 
         return Response({'msg':'Successfully left the announcement group'},status=status.HTTP_200_OK)
+    
+
+class GiveRatingView(generics.CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = RatingSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        group = serializer.validated_data.get('group')
+        user = serializer.validated_data.get('user')
+
+        try:
+            rating = Rating.objects.get(user=user,group=group)
+            rating.rating = serializer.validated_data.get('rating')
+            rating.save()
+        except Rating.DoesNotExist:
+            serializer.save()
+
+        return Response({'msg':'Group Rated succesfully'},status=status.HTTP_201_CREATED)
+    
+class RetrieveRatingView(generics.RetrieveAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = RatingSerializer
+    queryset = Rating.objects.all()
+
+    def get_object(self):
+        group_id = self.kwargs['pk']
+        user = self.request.user
+
+        try:
+            group = AnnouncementGroup.objects.get(group_id=group_id)
+        except AnnouncementGroup.DoesNotExist:
+            raise exceptions.APIException({'error': 'Announcement group does not exist'})
+        
+        try:
+            rating = Rating.objects.get(group=group,user=user)
+        except Rating.DoesNotExist:
+            raise exceptions.APIException({'error': 'Rating does not exist'})
+        return rating
