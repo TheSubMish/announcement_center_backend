@@ -21,6 +21,7 @@ urlpatterns = [
         path('v1/', include([
             path('user/',include('src.apps.auth.urls')),
             path('group/',include('src.apps.group.urls')),
+            path('announcement/',include('src.apps.announcement.urls')),
         ]))
     ]))
 ]

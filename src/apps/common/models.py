@@ -20,3 +20,16 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+class SpamWord(BaseModel):
+
+    word = models.CharField(max_length=255, null=False, blank=False)
+
+    class Meta:
+        db_table = 'spam_word'
+        verbose_name = 'Spam Word'
+        verbose_name_plural = 'Spam Words'
+
+    def __str__(self):
+        return self.word

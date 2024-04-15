@@ -1,8 +1,9 @@
-import os
+import os,re
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
 from django.conf import settings
 from celery import shared_task
+from .models import SpamWord
 
 def image_validate(image):
     check_exts = (".jpg", ".jpeg", ".png")
@@ -32,3 +33,22 @@ def send_user_mail(subject,recipients,message):
         to=recipients
     )
     mail.send()
+
+
+class SpamWordDetect:
+    def __init__(self,text):
+        self.text = text
+        self.spam_words = SpamWord.objects.all()
+
+    def is_spam(self):
+        for spam_word in self.spam_words:
+            if spam_word.word in self.text:
+                return True
+        return False
+    
+    def change_spam_word(self):
+        for word in self.spam_words:
+            pattern = rf"\b{word}\b"  # Word boundary for accurate matching
+            new_paragraph = re.sub(pattern, '****', self.text, flags=re.IGNORECASE)  # Case-insensitive
+            self.text = new_paragraph
+        return self.text

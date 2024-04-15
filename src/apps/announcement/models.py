@@ -13,8 +13,8 @@ class Announcement(BaseModel,UserModelMixin,GroupModelMixin):
     title = models.CharField(max_length=255,null=False, blank=False)
     description = models.TextField(null=False,blank=False)
     image = models.ImageField(default='',validators=[image_validate],upload_to='announcement')
-    paid_for_email = models.BooleanField(default=True)
-    paid_amount = models.IntegerField(default=0)
+    paid_for_email = models.BooleanField(default=False)
+    paid_amount = models.FloatField(default=0.0)
     payment_method = models.CharField(
         max_length=100,
         null=False,

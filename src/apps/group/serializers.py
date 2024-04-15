@@ -1,5 +1,6 @@
 from rest_framework import serializers,exceptions
 from src.apps.group.models import AnnouncementGroup,Rating
+from src.apps.common.utills import SpamWordDetect
 
 class CreateAnnouncementGroupSerializer(serializers.ModelSerializer):
 
@@ -18,6 +19,10 @@ class CreateAnnouncementGroupSerializer(serializers.ModelSerializer):
         image = validated_data.get('image',None)
         category = validated_data.get('category',None)
         admin = self.context['request'].user
+
+        detector = SpamWordDetect(description)
+        if detector.is_spam():
+            description = detector.change_spam_word()
 
         announcement_group = AnnouncementGroup.objects.create(
             name=name,
