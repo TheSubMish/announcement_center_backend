@@ -109,13 +109,35 @@ class RetrieveAnnouncementGroupView(generics.RetrieveAPIView):
     queryset = AnnouncementGroup.objects.all()
     serializer_class = AnnouncementGroupSerializer
     
-    def get_object(self):
+    @extend_schema(
+        responses={
+            "application/json": {
+                "example": {
+                    'group_id':'string (uuid)',
+                    'name':'string',
+                    'description':'string', 
+                    'image':'image file', 
+                    'average_rating':'float',
+                    'category':'string',
+                    'joined':'boolean',
+                    'admin_id':'string(uuid)',
+                    'members':'array of user id',
+                    'total_members':'number',
+                    'created_at':'Date time'
+                }
+            }
+        }
+    )
+    def get(self, request, *args, **kwargs):
         group_id = self.kwargs['pk']
         try:
             announcement_group = AnnouncementGroup.objects.get(group_id=group_id)
         except AnnouncementGroup.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement group does not exist'})
-        return announcement_group
+        
+        serializer = self.get_serializer(instance=announcement_group)
+        return Response(serializer.data)
+
 
 class ListUserCreatedAnnouncementGroupView(generics.ListAPIView):
     permission_classes = [CanViewAnnouncementGroup]
