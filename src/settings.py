@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'src.apps.auth',
     'src.apps.common',
     'src.apps.group',
+    'src.apps.payment',
 ]
 
 MIDDLEWARE = [

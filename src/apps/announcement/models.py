@@ -22,7 +22,8 @@ class Announcement(BaseModel,UserModelMixin,GroupModelMixin):
         choices=PaymentMethod.choices,
         default=PaymentMethod.KHALTI,
     )
-
+    pidx = models.CharField(max_length=255,blank=True,null=True)
+    
     def __str__(self):
         return self.title
     
