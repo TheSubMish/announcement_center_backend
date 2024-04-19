@@ -1,7 +1,7 @@
 from src.apps.auth.models import User
 from django.utils.crypto import get_random_string
 from django.utils import timezone
-from src.apps.common.utills import send_user_mail
+from src.apps.common.tasks import send_user_mail
 import os
 
 class OTPAction:

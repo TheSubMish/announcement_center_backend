@@ -73,12 +73,14 @@ class DestroyAnnouncementGroupView(generics.DestroyAPIView):
         return announcement_group
     
 class ListAnnouncementGroupView(generics.ListAPIView):
-    queryset = AnnouncementGroup.objects.all()
     serializer_class = AnnouncementGroupSerializer
     filterset_class = AnnouncementGroupFilter
 
     def get_queryset(self):
-        return AnnouncementGroup.objects.all()
+        queryset = AnnouncementGroup.objects.all()
+        filtered_queryset = self.filter_queryset(queryset)
+        print(filtered_queryset)
+        return filtered_queryset
 
     @extend_schema(
         responses={
@@ -100,10 +102,16 @@ class ListAnnouncementGroupView(generics.ListAPIView):
         }
     )
     def get(self, request, *args, **kwargs):
-        qs = AnnouncementGroup.objects.all()
-        page = self.paginate_queryset(qs)
-        serializer = self.get_serializer(page,many=True)
-        return self.get_paginated_response(serializer.data)
+        queryset = self.get_queryset()
+        filtered_queryset = self.filter_queryset(queryset)
+
+        if self.pagination_class:
+            page = self.paginate_queryset(filtered_queryset)
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(filtered_queryset, many=True)
+        return Response(serializer.data)
     
 class RetrieveAnnouncementGroupView(generics.RetrieveAPIView):
     queryset = AnnouncementGroup.objects.all()
@@ -170,11 +178,16 @@ class ListUserCreatedAnnouncementGroupView(generics.ListAPIView):
         }
     )
     def get(self, request, *args, **kwargs):
-        admin_id = self.request.user.id
-        qs = AnnouncementGroup.objects.filter(admin_id=admin_id)
-        page = self.paginate_queryset(qs)
-        serializer = self.get_serializer(page,many=True)
-        return self.get_paginated_response(serializer.data)
+        queryset = self.get_queryset()
+        filtered_queryset = self.filter_queryset(queryset)
+
+        if self.pagination_class:
+            page = self.paginate_queryset(filtered_queryset)
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(filtered_queryset, many=True)
+        return Response(serializer.data)
 
 
 class JoinAnnouncementGroupView(generics.GenericAPIView):
@@ -235,11 +248,16 @@ class ListUserJoinedAnnouncementGroupView(generics.GenericAPIView):
         }
     )
     def get(self, request, *args, **kwargs):
-        user = self.request.user
-        qs = AnnouncementGroup.objects.filter(members=user)
-        page = self.paginate_queryset(qs)
-        serializer = self.get_serializer(page,many=True)
-        return self.get_paginated_response(serializer.data)
+        queryset = self.get_queryset()
+        filtered_queryset = self.filter_queryset(queryset)
+
+        if self.pagination_class:
+            page = self.paginate_queryset(filtered_queryset)
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(filtered_queryset, many=True)
+        return Response(serializer.data)
     
 
 class LeaveAnnouncementGroupView(generics.GenericAPIView):

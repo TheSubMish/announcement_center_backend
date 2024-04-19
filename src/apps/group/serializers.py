@@ -77,7 +77,6 @@ class AnnouncementGroupSerializer(serializers.ModelSerializer):
         )
 
     def get_joined(self,obj):
-        print('inside average rating')
         member = self.context['request'].user
         if member and member.is_authenticated:
             return member in obj.members.all()
@@ -85,7 +84,6 @@ class AnnouncementGroupSerializer(serializers.ModelSerializer):
         return False
     
     def get_average_rating(self, obj):
-        print('inside average rating')
         average_rating = obj.average_rating()  # Call the method from the model
         return average_rating if average_rating else 0.0
 
