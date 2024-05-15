@@ -79,7 +79,6 @@ class ListAnnouncementGroupView(generics.ListAPIView):
     def get_queryset(self):
         queryset = AnnouncementGroup.objects.all()
         filtered_queryset = self.filter_queryset(queryset)
-        print(filtered_queryset)
         return filtered_queryset
 
     @extend_schema(

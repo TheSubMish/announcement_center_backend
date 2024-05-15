@@ -114,12 +114,12 @@ class VerifyLoginOTPView(generics.GenericAPIView):
 class UserLogoutView(generics.GenericAPIView):
     serializer_class = UserLogoutSerializer
     permission_classes = [IsAuthenticated]
-
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exceptions=True)
+        # serializer.is_valid(raise_exceptions=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         refresh_token = serializer.validated_data.get('refresh')
-
         if refresh_token is None:
             raise exceptions.APIException({'error': 'Refresh token is required'},status=status.HTTP_400_BAD_REQUEST)
         
