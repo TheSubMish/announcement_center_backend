@@ -74,6 +74,7 @@ class CreateAnnouncementCommentSerializer(serializers.ModelSerializer):
         announcement = validated_data.get('announcement',None)
         user = validated_data.get('user',None)
         comment = validated_data.get('comment',None)
+        parent = validated_data.get('parent',None)
 
         detector = SpamWordDetect(comment)
         if detector.is_spam():
@@ -83,6 +84,7 @@ class CreateAnnouncementCommentSerializer(serializers.ModelSerializer):
             announcement=announcement,
             user=user,
             comment=comment,
+            parent=parent,
         )
 
         return announcement_comment

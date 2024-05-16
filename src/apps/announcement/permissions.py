@@ -58,3 +58,18 @@ class CanDeleteAnnouncement(BasePermission):
             request.user.is_authenticated and
             request.user.has_perm('announcement.delete_announcement')
         )
+    
+
+class CanUpdateComment(BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        if obj.user == request.user:
+            return True
+        return False
+    
+class CanDeleteComment(BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        if obj.user == request.user:
+            return True
+        return False
