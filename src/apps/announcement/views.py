@@ -12,8 +12,11 @@ from .permissions import (
     CanCreateAnnouncement,
     CanUpdateAnnouncement,
     CanViewAnnouncement,
-    CanDeleteAnnouncement
+    CanDeleteAnnouncement,
+    CanUpdateComment,
+    CanDeleteComment,
 )
+from rest_framework.permissions import IsAuthenticated
 from .models import Announcement,AnnouncementComment
 from src.apps.group.models import AnnouncementGroup
 
@@ -87,7 +90,7 @@ class DeleteAnnouncementView(generics.DestroyAPIView):
         return announcement
     
 class CreateAnnouncementCommentView(generics.CreateAPIView):
-
+    # permission_classes = [IsAuthenticated]
     serializer_class = CreateAnnouncementCommentSerializer
 
     def post(self, request, *args, **kwargs):
@@ -96,35 +99,8 @@ class CreateAnnouncementCommentView(generics.CreateAPIView):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
-
-class UpdateAnnouncementCommentView(generics.UpdateAPIView):
-    serializer_class = UpdateAnnouncementCommentSerializer
-    queryset = AnnouncementComment.objects.all()
-
-    def get_object(self):
-        id = self.kwargs.get('pk', None)
-        try:
-            announcement_comment = AnnouncementComment.objects.get(id=id)
-        except AnnouncementComment.DoesNotExist:
-            raise exceptions.APIException({'error': 'Announcement comment does not exist'})
-        return announcement_comment
-    
-
-class DeleteAnnouncementCommentView(generics.DestroyAPIView):
-    serializer_class = AnnouncementCommentSerializer
-    queryset = AnnouncementComment.objects.all()
-
-    def get_object(self):
-        id = self.kwargs.get('pk', None)
-        try:
-            announcement_comment = AnnouncementComment.objects.get(id=id)
-        except AnnouncementComment.DoesNotExist:
-            raise exceptions.APIException({'error': 'Announcement comment does not exist'})
-        return announcement_comment
-    
-
 class ListAnnouncementCommentsView(generics.ListAPIView):
-
+    # permission_classes = [IsAuthenticated]
     serializer_class = AnnouncementCommentSerializer
     queryset = AnnouncementComment.objects.all()
 
@@ -140,7 +116,34 @@ class ListAnnouncementCommentsView(generics.ListAPIView):
     
 
 class RetrieveAnnouncementCommentsView(generics.RetrieveAPIView):
+    # permission_classes = [IsAuthenticated]
+    serializer_class = AnnouncementCommentSerializer
+    queryset = AnnouncementComment.objects.all()
 
+    def get_object(self):
+        id = self.kwargs.get('pk', None)
+        try:
+            announcement_comment = AnnouncementComment.objects.get(id=id)
+        except AnnouncementComment.DoesNotExist:
+            raise exceptions.APIException({'error': 'Announcement comment does not exist'})
+        return announcement_comment
+
+class UpdateAnnouncementCommentView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated,CanUpdateComment]
+    serializer_class = UpdateAnnouncementCommentSerializer
+    queryset = AnnouncementComment.objects.all()
+
+    def get_object(self):
+        id = self.kwargs.get('pk', None)
+        try:
+            announcement_comment = AnnouncementComment.objects.get(id=id)
+        except AnnouncementComment.DoesNotExist:
+            raise exceptions.APIException({'error': 'Announcement comment does not exist'})
+        return announcement_comment
+    
+
+class DeleteAnnouncementCommentView(generics.DestroyAPIView):
+    permission_classes = [IsAuthenticated,CanDeleteComment]
     serializer_class = AnnouncementCommentSerializer
     queryset = AnnouncementComment.objects.all()
 
