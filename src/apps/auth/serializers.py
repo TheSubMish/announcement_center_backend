@@ -158,15 +158,15 @@ class ForgotPasswordSerializer(serializers.Serializer):
         return attrs
     
 class VerifyForgotPasswordSerializer(serializers.Serializer):
-    username = serializers.CharField(max_length=255,required=True,allow_blank=False)
+    email = serializers.CharField(max_length=255,required=True,allow_blank=False)
     otp = serializers.CharField(max_length=255,required=True,allow_blank=False)
 
     def validate(self, attrs):
-        username = attrs.get('username',None)
+        email = attrs.get('email',None)
         otp = attrs.get('otp',None)
 
         try:
-            user = User.objects.get(username=username)
+            user = User.objects.get(email=email)
             attrs['user'] = user
         except User.DoesNotExist:
             attrs['user'] = None
@@ -181,8 +181,6 @@ class VerifyForgotPasswordSerializer(serializers.Serializer):
 
         if not verified:
             raise serializers.ValidationError(message)
-        
-        print(message)
         
         attrs['message'] = message
 

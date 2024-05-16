@@ -48,10 +48,15 @@ class UpdateAnnouncementGroupSerializer(serializers.ModelSerializer):
         )
 
     def update(self, instance, validated_data):
-        instance.name = validated_data.get('name',instance.name)
-        instance.description = validated_data.get('description',instance.description)
-        instance.image = validated_data.get('image',instance.image)
-        instance.category = validated_data.get('category',instance.category)
+        if validated_data.get('name') != instance.name:
+            # If 'name' field is being updated, ensure uniqueness
+            if AnnouncementGroup.objects.exclude(id=instance.id).filter(name=validated_data['name']).exists():
+                raise serializers.ValidationError({'name': 'An AnnouncementGroup with this name already exists.'})
+            instance.name = validated_data['name']
+
+        instance.description = validated_data.get('description', instance.description)
+        instance.image = validated_data.get('image', instance.image)
+        instance.category = validated_data.get('category', instance.category)
         instance.save()
         return instance
     

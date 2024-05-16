@@ -35,23 +35,22 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_spectacular',
     'src.apps.announcement',
-    'src.apps.auth',
+    'src.apps.auth.apps.AuthConfig',
     'src.apps.common',
-    'src.apps.group',
+    'src.apps.group.apps.GroupConfig',
     'src.apps.payment',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
-
-    "corsheaders.middleware.CorsMiddleware",
 ]
 
 ROOT_URLCONF = 'src.urls'
@@ -142,6 +141,7 @@ MEDIA_URL = "media/"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'authentication.User'
+AUTH_GROUP_MODEL = 'group.AnnouncementGroup'
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",

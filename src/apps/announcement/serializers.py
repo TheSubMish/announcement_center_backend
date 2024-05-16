@@ -1,8 +1,6 @@
 from rest_framework import serializers
 from .models import Announcement,AnnouncementComment
-from src.apps.group.models import AnnouncementGroup
 from src.apps.common.utills import SpamWordDetect
-from src.apps.auth.models import User
 
 class CreateAnnouncementSerializer(serializers.ModelSerializer):
 
