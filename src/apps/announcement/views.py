@@ -19,6 +19,9 @@ from .permissions import (
 from rest_framework.permissions import IsAuthenticated
 from .models import Announcement,AnnouncementComment
 from src.apps.group.models import AnnouncementGroup
+import logging
+
+logger = logging.getLogger('info_logger')
 
 class CreateAnnouncementView(generics.CreateAPIView):
     serializer_class = CreateAnnouncementSerializer
@@ -57,7 +60,6 @@ class ListAnnouncementsView(generics.ListAPIView):
         except AnnouncementGroup.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement group does not exist'})
         
-
         announcements = Announcement.objects.filter(group=announcement_group).order_by('-created_at')
         return announcements
     
@@ -87,6 +89,7 @@ class DeleteAnnouncementView(generics.DestroyAPIView):
             announcement = Announcement.objects.get(id=id)
         except Announcement.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement does not exist'})
+        logger.info(f'Announcement: {announcement.title} deleting by user: {self.request.user.username}')
         return announcement
     
 class CreateAnnouncementCommentView(generics.CreateAPIView):
@@ -153,4 +156,5 @@ class DeleteAnnouncementCommentView(generics.DestroyAPIView):
             announcement_comment = AnnouncementComment.objects.get(id=id)
         except AnnouncementComment.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement comment does not exist'})
+        logger.info(f'Anouncement comment {announcement_comment} deleting by user {self.request.user.username}')
         return announcement_comment

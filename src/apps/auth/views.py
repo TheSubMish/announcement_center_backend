@@ -13,13 +13,15 @@ from .serializers import (
 )
 from rest_framework.response import Response
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated,IsAdminUser
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User,Device
 from src.apps.common.utills import get_user_ip
 from src.apps.common.otp import OTPhandlers,OTPAction
 import geocoder
+import logging
 
+logger = logging.getLogger('info_logger')
 
 class UserRegisterView(generics.CreateAPIView):
     serializer_class = UserRegisterSerializer
@@ -29,6 +31,7 @@ class UserRegisterView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         headers = self.get_success_headers(serializer.data)
+        logger.info(f'User created: {serializer.data["username"]}')
         return Response({'msg':'User registration successful'},status=status.HTTP_201_CREATED,headers=headers)
 
 
@@ -63,6 +66,7 @@ class UserLoginView(generics.GenericAPIView):
                 device.last_login = timezone.now()
                 device.is_active = True
                 device.save()
+                logger.info(f'{user.username} device information updated')
             except Device.DoesNotExist:
                 device = Device.objects.create(
                     admin = user,
@@ -78,11 +82,16 @@ class UserLoginView(generics.GenericAPIView):
                     blacklist_ip=False,
                     last_login=timezone.now()
                 )
+                logger.info(f'{user.username} device information created')
 
+            logger.info(f'{user.username} logged in')
+            
             return Response({'refresh':str(token),'access': str(token.access_token),'msg':'User logged in successful'},status=status.HTTP_200_OK)
         else:
             otp_handler = OTPhandlers(request,user,OTPAction.LOGIN)
             otp_handler.send_otp()
+    
+            logger.info(f'Login otp sent to: {user.username}')
             return Response({'msg':'Login OTP has been sent to your email address'},status=status.HTTP_200_OK)
         
 
@@ -98,6 +107,7 @@ class VerifyLoginOTPView(generics.GenericAPIView):
 
         if user is not None:
             token = TokenObtainPairSerializer.get_token(user)
+            logger.info(f'User login otp verified: {user.username}')
 
             return Response(
                 {
@@ -107,7 +117,8 @@ class VerifyLoginOTPView(generics.GenericAPIView):
                 },
                 status=status.HTTP_200_OK
             )
-
+        
+        logger.warning(f'User login otp verification failed')
         return Response({'msg':'OTP verification failed'},status=status.HTTP_400_BAD_REQUEST)
     
 
@@ -121,6 +132,7 @@ class UserLogoutView(generics.GenericAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         refresh_token = serializer.validated_data.get('refresh')
         if refresh_token is None:
+            logger.warning('Refresh token not found')
             raise exceptions.APIException({'error': 'Refresh token is required'},status=status.HTTP_400_BAD_REQUEST)
         
         token = RefreshToken(refresh_token)
@@ -129,9 +141,11 @@ class UserLogoutView(generics.GenericAPIView):
             user = request.user
             user.is_active = False
             user.save()
+            logger.info(f'{user.username} logged out successfully')
             return Response({'msg':'User logged out successful'},status=status.HTTP_200_OK)
         
         except Exception as e:
+            logger.warning(f'User logout failed: {str(e)}')
             raise exceptions.APIException({'error': str(e)},status=status.HTTP_400_BAD_REQUEST)
 
 class UserRetrieveView(generics.RetrieveAPIView):
@@ -150,19 +164,19 @@ class UserRetrieveView(generics.RetrieveAPIView):
     def get_queryset(self):
         return User.objects.all()
 
-class UserDetailsView(generics.RetrieveAPIView):
-    serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
+# class UserDetailsView(generics.RetrieveAPIView):
+#     serializer_class = UserSerializer
+#     permission_classes = [IsAuthenticated]
 
-    def get_object(self):
-        return self.request.user
+#     def get_object(self):
+#         return self.request.user
     
-    def get_queryset(self):
-        return User.objects.all()
+#     def get_queryset(self):
+#         return User.objects.all()
     
     
 class UserlistView(generics.ListAPIView):
-    permission_classes = []
+    permission_classes = [IsAuthenticated,IsAdminUser]
     serializer_class = UserSerializer
 
     def get_queryset(self):
@@ -193,6 +207,8 @@ class UserChangePasswordView(generics.GenericAPIView):
         if user is not None:
             token = TokenObtainPairSerializer.get_token(user)
 
+            logger.info(f'User password changed successfully: {user.username}')
+
             return Response(
                 {
                    'refresh':str(token),
@@ -201,7 +217,8 @@ class UserChangePasswordView(generics.GenericAPIView):
                 },
                 status=status.HTTP_200_OK
             )
-
+        
+        logger.info(f'User password change unsuccessfull: {user.username}')
         return Response({'msg':'Password not changed'},status=status.HTTP_200_OK)
     
 
@@ -218,8 +235,11 @@ class ForgotPasswordView(generics.GenericAPIView):
             otp_handler = OTPhandlers(request,user,OTPAction.RESET)
             otp_handler.send_otp()
 
+            logger.info(f'User forgot password otp sent: {user.username}')
+
             return Response({'msg':'Reset OTP has been sent to your email address'},status=status.HTTP_200_OK)
 
+        logger.info(f'User forgot password otp send unsuccessful: {user.username}')
         return Response({'msg':'Something went wrong'},status=status.HTTP_400_BAD_REQUEST)
     
 
@@ -232,6 +252,8 @@ class VerifyForgotPasswordView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         
         message = serializer.validated_data.get('message',None)
+        
+        logger.info(f'User forgot password otp sent: {serializer.validated_data.get("user").username}')
 
         return Response({'msg':message},status=status.HTTP_200_OK)
     
@@ -249,6 +271,7 @@ class ChangeForgotPasswordView(generics.GenericAPIView):
         if user is not None:
             token = TokenObtainPairSerializer.get_token(user)
 
+            logger.info(f'User password changed successfully: {user.username}')
             return Response(
                 {
                    'refresh':str(token),
@@ -257,5 +280,6 @@ class ChangeForgotPasswordView(generics.GenericAPIView):
                 },
                 status=status.HTTP_200_OK
             )
-
+        
+        logger.info(f'User password changed unsuccessfully')
         return Response({'msg':'Password not changed'},status=status.HTTP_200_OK)

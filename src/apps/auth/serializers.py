@@ -2,6 +2,9 @@ from rest_framework import serializers,exceptions
 from src.apps.auth.models import User
 from django.db import transaction
 from src.apps.common.otp import OTPhandlers,OTPAction
+import logging
+
+logger = logging.getLogger('info_logger')
 
 class UserRegisterSerializer(serializers.ModelSerializer):
 
@@ -48,7 +51,6 @@ class UserLoginSerializer(serializers.Serializer):
         else:
             attrs['user'] = None
             raise serializers.ValidationError({'msg':'Invalid username or password'})
-
 
         return attrs
     
@@ -108,6 +110,7 @@ class UserSerializer(serializers.ModelSerializer):
         instance.profilepic = validated_data.get('profilepic',instance.profilepic)
         instance.phone_number = validated_data.get('phone_number',instance.phone_number)
         instance.save()
+        logger.info(f'user updated: {instance.username}')
         return instance
     
 

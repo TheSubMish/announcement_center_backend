@@ -49,6 +49,3 @@ class AnnouncementComment(BaseModel):
             level += 1
             p = p.parent
         return level
-
-    def __str__(self):
-        return self.user.username

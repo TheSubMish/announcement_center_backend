@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from .models import Announcement,AnnouncementComment
 from src.apps.common.utills import SpamWordDetect
+import logging
+
+logger = logging.getLogger('info_logger')
 
 class CreateAnnouncementSerializer(serializers.ModelSerializer):
 
@@ -35,6 +38,7 @@ class CreateAnnouncementSerializer(serializers.ModelSerializer):
             admin=admin,
             group=group
         )
+        logger.info(f'announcement created: {announcement.title} by user: {announcement.admin}')
         return announcement
     
 
@@ -55,6 +59,8 @@ class UpdateAnnouncementSerializer(serializers.ModelSerializer):
         instance.image = validated_data.get('image',instance.image)
         instance.payment_method = validated_data.get('payment_method',instance.payment_method)
         instance.save()
+        logger.info(f'announcement updated: {instance.title} by user: {instance.admin}')
+        print(logger)
         return instance
     
 class AnnouncementSerializer(serializers.ModelSerializer):
@@ -86,6 +92,7 @@ class CreateAnnouncementCommentSerializer(serializers.ModelSerializer):
             comment=comment,
             parent=parent,
         )
+        logger.info(f'comment in announcement: {announcement.title} by user: {announcement_comment.user}')
 
         return announcement_comment
     
@@ -95,11 +102,10 @@ class UpdateAnnouncementCommentSerializer(serializers.ModelSerializer):
         model = AnnouncementComment
         fields = '__all__'
 
-
     def update(self, instance, validated_data):
         instance.comment = validated_data.get('comment',instance.comment)
         instance.save()
-    
+        logger.info(f'comment updated in announcement: {instance.announcement.title} by user: {instance.user}')
         return instance
     
 class AnnouncementCommentSerializer(serializers.ModelSerializer):

@@ -1,6 +1,9 @@
 from rest_framework import serializers,exceptions
 from src.apps.group.models import AnnouncementGroup,Rating
 from src.apps.common.utills import SpamWordDetect
+import logging
+
+logger = logging.getLogger('info_logger')
 
 class CreateAnnouncementGroupSerializer(serializers.ModelSerializer):
 
@@ -51,6 +54,7 @@ class UpdateAnnouncementGroupSerializer(serializers.ModelSerializer):
         if validated_data.get('name') != instance.name:
             # If 'name' field is being updated, ensure uniqueness
             if AnnouncementGroup.objects.exclude(id=instance.id).filter(name=validated_data['name']).exists():
+                logger.warning(f'Announcement group with name "{instance.name}" already exists')
                 raise serializers.ValidationError({'name': 'An AnnouncementGroup with this name already exists.'})
             instance.name = validated_data['name']
 
@@ -58,6 +62,7 @@ class UpdateAnnouncementGroupSerializer(serializers.ModelSerializer):
         instance.image = validated_data.get('image', instance.image)
         instance.category = validated_data.get('category', instance.category)
         instance.save()
+        logger.info('Group updated successfully {instance.name}')
         return instance
     
 
@@ -122,9 +127,11 @@ class RatingSerializer(serializers.ModelSerializer):
         rating = attrs.get('rating',None)
 
         if group is None:
+            logger.warning('Group does not exist')
             raise exceptions.ValidationError({'group': 'This field is required.'})
         
         if user is None:
+            logger.warning('User does not exist')
             raise exceptions.ValidationError({'user': 'This field is required.'})
         
         attrs['group'] = group

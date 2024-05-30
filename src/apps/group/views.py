@@ -16,6 +16,9 @@ from .permissions import (
 from .filters import AnnouncementGroupFilter
 from .models import AnnouncementGroup,Rating
 from drf_spectacular.utils import extend_schema
+import logging
+
+logger = logging.getLogger('info_logger')
 
 class CreateAnnouncementGroupView(generics.CreateAPIView):
     permission_classes = [CanCreateAnnouncementGroup]
@@ -37,7 +40,7 @@ class CreateAnnouncementGroupView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-
+        logger.info(f"Group created successfully {serializer.date['name']}")
         return Response({'msg':'Announcement group created successfully'},status=status.HTTP_201_CREATED)
     
 
@@ -69,7 +72,9 @@ class DestroyAnnouncementGroupView(generics.DestroyAPIView):
         try:
             announcement_group = AnnouncementGroup.objects.get(group_id=group_id)
         except AnnouncementGroup.DoesNotExist:
+            logger.warning("Announcement group not found")
             raise exceptions.APIException({'error': 'Announcement group does not exist'})
+        logger.info(f"Announcement group deleted {announcement_group.name}")
         return announcement_group
     
 class ListAnnouncementGroupView(generics.ListAPIView):
@@ -200,19 +205,22 @@ class JoinAnnouncementGroupView(generics.GenericAPIView):
 
         group = serializer.validated_data.get('group')
         if group is None:
+            logger.warning('Group not found')
             raise exceptions.ValidationError({'group': 'This field is required.'})
         
         user = self.request.user
         if user is None:
+            logger.warning('User not found')
             raise exceptions.APIException('User is not logged in')
         
         if user in group.members.all():
+            logger.warning('User already in group')
             raise exceptions.APIException('User already in group')
         
         group.members.add(user)
         group.total_members += 1
         group.save()
-
+        logger.info(f"{user.username} joined group {group.name}")
         return Response({'msg':'Successfully joined the announcement group'},status=status.HTTP_200_OK)
 
 
@@ -269,19 +277,22 @@ class LeaveAnnouncementGroupView(generics.GenericAPIView):
 
         group = serializer.validated_data.get('group')
         if group is None:
+            logger.warning('Group not found')
             raise exceptions.ValidationError({'group': 'This field is required.'})
         
         user = self.request.user
         if user is None:
+            logger.warning('User not found')
             raise exceptions.APIException('User is not logged in')
         
         if user not in group.members.all():
+            logger.warning(f'{user.username} already in group {group.name}')
             raise exceptions.APIException('User not found group in group')
 
         group.members.remove(user)
         group.total_members -= 1
         group.save()
-
+        logger.info(f'{user.username} left group {group.name}')
         return Response({'msg':'Successfully left the announcement group'},status=status.HTTP_200_OK)
     
 
@@ -300,7 +311,9 @@ class GiveRatingView(generics.CreateAPIView):
             rating = Rating.objects.get(user=user,group=group)
             rating.rating = serializer.validated_data.get('rating')
             rating.save()
+            logger.info(f'{user.username} rated group {group.name}')
         except Rating.DoesNotExist:
+            logger.info(f'{user.username} rated group {group.name}')
             serializer.save()
 
         return Response({'msg':'Group Rated succesfully'},status=status.HTTP_201_CREATED)
