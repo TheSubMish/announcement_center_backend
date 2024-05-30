@@ -110,7 +110,7 @@ class UpdateAnnouncementCommentSerializer(serializers.ModelSerializer):
     
 class AnnouncementCommentSerializer(serializers.ModelSerializer):
     level = serializers.SerializerMethodField()
-
+    replies = serializers.SerializerMethodField()
     class Meta:
         model = AnnouncementComment
         fields = '__all__'
@@ -118,3 +118,7 @@ class AnnouncementCommentSerializer(serializers.ModelSerializer):
     def get_level(self, obj):
         level = obj.get_level()
         return level
+    
+    def get_replies(self, obj):
+        replies = obj.replies.order_by('-created_at')  # Order replies by creation time in descending order
+        return AnnouncementCommentSerializer(replies, many=True).data

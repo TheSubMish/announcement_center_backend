@@ -114,7 +114,7 @@ class ListAnnouncementCommentsView(generics.ListAPIView):
         except Announcement.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement does not exist'})
 
-        announcement_comments = AnnouncementComment.objects.filter(announcement=announcement).order_by('-created_at')
+        announcement_comments = AnnouncementComment.objects.filter(announcement=announcement, parent__isnull=True).prefetch_related('replies').order_by('-created_at')
         return announcement_comments
     
 

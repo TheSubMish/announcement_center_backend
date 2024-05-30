@@ -190,12 +190,13 @@ class VerifyForgotPasswordSerializer(serializers.Serializer):
         return super().validate(attrs)
     
 class ChangeForgotPasswordSerializer(serializers.Serializer):
-    username = serializers.CharField(max_length=255,required=True,allow_blank=False)
+    email = serializers.CharField(max_length=255,required=True,allow_blank=False)
+    # username = serializers.CharField(max_length=255,required=True,allow_blank=False)
     # old_password = serializers.CharField(max_length=255,required=True,allow_blank=False)
     new_password = serializers.CharField(max_length=255,required=True,allow_blank=False)
 
     def validate(self, attrs):
-        username = attrs.get('username',None)
+        email = attrs.get('email',None)
         # old_password = attrs.get('old_password',None)
         new_password = attrs.get('new_password',None)
 
@@ -203,9 +204,9 @@ class ChangeForgotPasswordSerializer(serializers.Serializer):
         #     raise serializers.ValidationError({'msg':'Old password or new password missing'})
         
         try:
-            user : User = User.objects.get(username=username)
+            user : User = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError({'msg':'Invalid username or password'})
+            raise serializers.ValidationError({'msg':'Invalid email or password'})
         
         # if not user.check_password(old_password):
         #     raise serializers.ValidationError({'msg':'Invalid username or password'})
