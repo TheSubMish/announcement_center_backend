@@ -148,6 +148,22 @@ class UserLogoutView(generics.GenericAPIView):
             logger.warning(f'User logout failed: {str(e)}')
             raise exceptions.APIException({'error': str(e)},status=status.HTTP_400_BAD_REQUEST)
 
+class UserRetrieveView(generics.RetrieveAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        id = self.kwargs.get('pk', None)
+        try:
+            user = User.objects.get(id=id)
+        except User.DoesNotExist:
+            raise exceptions.APIException({'error': 'User does not exist'})
+        
+        return user
+    
+    def get_queryset(self):
+        return User.objects.all()
+
 class UserDetailsView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
