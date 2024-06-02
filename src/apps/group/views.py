@@ -5,6 +5,7 @@ from .serializers import (
     UpdateAnnouncementGroupSerializer,
     AnnouncementGroupSerializer,
     JoinAnnouncementGroupSerializer,
+    LeaveAnnouncementGroupSerializer,
     RatingSerializer,
 )
 from .permissions import (
@@ -255,7 +256,7 @@ class ListUserJoinedAnnouncementGroupView(generics.GenericAPIView):
 
 class LeaveAnnouncementGroupView(generics.DestroyAPIView):
     permission_classes = [CanViewAnnouncementGroup]
-    serializer_class = JoinAnnouncementGroupSerializer
+    serializer_class = LeaveAnnouncementGroupSerializer
 
     def destroy(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -263,7 +264,9 @@ class LeaveAnnouncementGroupView(generics.DestroyAPIView):
 
         group = serializer.validated_data.get('group')
         user = serializer.validated_data.get('user')
-
+        GroupMember.objects.delete(user=user, group=group)
+        group.total_members = group.total_members - 1
+        group.save()
         logger.info(f'{user.username} left group {group.name}')
         return Response({'msg':'Successfully left the announcement group'},status=status.HTTP_200_OK)
     
@@ -283,9 +286,9 @@ class GiveRatingView(generics.CreateAPIView):
             rating = Rating.objects.get(user=user,group=group)
             rating.rating = serializer.validated_data.get('rating')
             rating.save()
-            logger.info(f'{user.username} rated group {group.name}')
+            logger.info(f'{user.username} updated their rating ({serializer.validated_data['rating']}) to group {group.name}')
         except Rating.DoesNotExist:
-            logger.info(f'{user.username} rated group {group.name}')
+            logger.info(f'{user.username} rated ({serializer.validated_data['rating']}) to group {group.name}')
             serializer.save()
 
         return Response({'msg':'Group Rated succesfully'},status=status.HTTP_201_CREATED)
