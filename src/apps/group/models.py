@@ -25,7 +25,7 @@ class AnnouncementGroup(Group):
     group_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     description = models.TextField(null=False,blank=False)
     image = models.ImageField(default='',validators=[image_validate])
-    admin_id = models.CharField(max_length=255,null=False, blank=False)
+    admin = models.ForeignKey(User,on_delete=models.SET_NULL,null=True,blank=True)
     category = models.CharField(
         max_length=100,
         null=False,
@@ -33,7 +33,6 @@ class AnnouncementGroup(Group):
         choices=Category.choices,
         default=Category.WEB,
     )
-    members = models.ManyToManyField(User)
     total_members = models.IntegerField(default=1)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -65,7 +64,7 @@ class Role(models.TextChoices):
     MODERATOR = 'moderator','Moderator'
     ADMIN = 'admin','Admin'
     
-class GroupMemberShip(BaseModel):
+class GroupMember(BaseModel):
     group = models.ForeignKey(AnnouncementGroup,on_delete=models.CASCADE)
     user = models.ForeignKey(User,on_delete=models.CASCADE)
     role = models.CharField(
