@@ -160,3 +160,9 @@ class RatingSerializer(serializers.ModelSerializer):
         instance.rating = validated_data.get('rating',instance.rating)
         instance.save()
         return instance
+    
+# class ChangeMemberRoleSerializer(serializers.ModelSerializer):
+
+#     class Meta:
+#         model = AnnouncementGroup
+#         fields = '__all__'

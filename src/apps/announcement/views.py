@@ -19,6 +19,7 @@ from .permissions import (
 from rest_framework.permissions import IsAuthenticated
 from .models import Announcement,AnnouncementComment
 from src.apps.group.models import AnnouncementGroup
+from drf_spectacular.utils import extend_schema
 import logging
 
 logger = logging.getLogger('info_logger')
@@ -93,7 +94,7 @@ class DeleteAnnouncementView(generics.DestroyAPIView):
         return announcement
     
 class CreateAnnouncementCommentView(generics.CreateAPIView):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     serializer_class = CreateAnnouncementCommentSerializer
 
     def post(self, request, *args, **kwargs):
@@ -103,7 +104,7 @@ class CreateAnnouncementCommentView(generics.CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
 class ListAnnouncementCommentsView(generics.ListAPIView):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     serializer_class = AnnouncementCommentSerializer
     queryset = AnnouncementComment.objects.all()
 
@@ -117,9 +118,30 @@ class ListAnnouncementCommentsView(generics.ListAPIView):
         announcement_comments = AnnouncementComment.objects.filter(announcement=announcement, parent__isnull=True).prefetch_related('replies').order_by('-created_at')
         return announcement_comments
     
+    @extend_schema(
+        responses={
+            "application/json": {
+                "example": {
+                    "id": "uuid",
+                    "level": "string",
+                    "replies": "string",
+                    "status": "string",
+                    "created_at": "datetime",
+                    "updated_at": "datetime",
+                    "announcement": "uuid",
+                    "user": "uuid",
+                    "parent": "uuid",
+                }
+            }
+        }
+    )
+    def get(self, request, *args, **kwargs):
+        announcement_comments = self.get_queryset()
+        serializer = self.get_serializer(instance=announcement_comments,many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
 
 class RetrieveAnnouncementCommentsView(generics.RetrieveAPIView):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     serializer_class = AnnouncementCommentSerializer
     queryset = AnnouncementComment.objects.all()
 
@@ -130,6 +152,28 @@ class RetrieveAnnouncementCommentsView(generics.RetrieveAPIView):
         except AnnouncementComment.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement comment does not exist'})
         return announcement_comment
+    
+    @extend_schema(
+        responses={
+            "application/json": {
+                "example": {
+                    "id": "uuid",
+                    "level": "string",
+                    "replies": "string",
+                    "status": "string",
+                    "created_at": "datetime",
+                    "updated_at": "datetime",
+                    "announcement": "uuid",
+                    "user": "uuid",
+                    "parent": "uuid",
+                }
+            }
+        }
+    )
+    def get(self,request, *args, **kwargs):
+        announcement_comment = self.get_object()
+        serializer = self.get_serializer(instance=announcement_comment)
+        return Response(serializer.data,status=status.HTTP_200_OK)
 
 class UpdateAnnouncementCommentView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated,CanUpdateComment]

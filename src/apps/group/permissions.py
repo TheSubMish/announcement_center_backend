@@ -50,3 +50,16 @@ class CanViewAnnouncementGroup(BasePermission):
             request.user.is_authenticated and
             request.user.has_perm('group.view_announcementgroup')
         )
+    
+class CanChangeMemberRole(BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        if obj.admin_id == request.user.id:
+            return True
+        return False
+    
+    def has_permission(self, request, view):
+        return bool(
+            request.user and
+            request.user.is_authenticated
+        )

@@ -60,4 +60,18 @@ class Rating(BaseModel):
     def __str__(self) -> str:
         return self.user.username
     
+class Role(models.TextChoices):
+    MEMBER = 'member','Member'
+    MODERATOR = 'moderator','Moderator'
+    ADMIN = 'admin','Admin'
     
+class GroupMemberShip(BaseModel):
+    group = models.ForeignKey(AnnouncementGroup,on_delete=models.CASCADE)
+    user = models.ForeignKey(User,on_delete=models.CASCADE)
+    role = models.CharField(
+        max_length=255,
+        null= False,
+        blank=False,
+        choices=Role.choices,
+        default=Role.MEMBER,
+    )

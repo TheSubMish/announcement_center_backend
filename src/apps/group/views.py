@@ -12,6 +12,7 @@ from .permissions import (
     CanUpdateAnnouncementGroup,
     CanDeleteAnnouncementGroup,
     CanViewAnnouncementGroup,
+    CanChangeMemberRole,
 )
 from .filters import AnnouncementGroupFilter
 from .models import AnnouncementGroup,Rating
@@ -337,3 +338,8 @@ class RetrieveRatingView(generics.RetrieveAPIView):
         except Rating.DoesNotExist:
             raise exceptions.APIException({'error': 'Rating does not exist'})
         return rating
+    
+
+class ChangeMemberRoleView(generics.UpdateAPIView):
+    permission_classes = [CanChangeMemberRole]
+#     serializer_class = ''
