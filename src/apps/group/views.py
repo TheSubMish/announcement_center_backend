@@ -4,7 +4,7 @@ from .serializers import (
     CreateAnnouncementGroupSerializer,
     UpdateAnnouncementGroupSerializer,
     AnnouncementGroupSerializer,
-    JoinAnnouncementGroupsSerializer,
+    JoinAnnouncementGroupSerializer,
     RatingSerializer,
 )
 from .permissions import (
@@ -15,7 +15,7 @@ from .permissions import (
     CanChangeMemberRole,
 )
 from .filters import AnnouncementGroupFilter
-from .models import AnnouncementGroup,Rating
+from .models import AnnouncementGroup,Rating,GroupMember
 from drf_spectacular.utils import extend_schema
 import logging
 
@@ -41,7 +41,7 @@ class CreateAnnouncementGroupView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        logger.info(f"Group created successfully {serializer.date['name']}")
+        logger.info(f"Group created successfully {serializer.validated_data['name']}")
         return Response({'msg':'Announcement group created successfully'},status=status.HTTP_201_CREATED)
     
 
@@ -195,32 +195,17 @@ class ListUserCreatedAnnouncementGroupView(generics.ListAPIView):
         return Response(serializer.data)
 
 
-class JoinAnnouncementGroupView(generics.GenericAPIView):
+class JoinAnnouncementGroupView(generics.CreateAPIView):
     permission_classes = [CanViewAnnouncementGroup]
-    serializer_class = JoinAnnouncementGroupsSerializer
+    serializer_class = JoinAnnouncementGroupSerializer
 
     def post(self, request, *args, **kwargs):
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        group = serializer.validated_data.get('group')
-        if group is None:
-            logger.warning('Group not found')
-            raise exceptions.ValidationError({'group': 'This field is required.'})
-        
-        user = self.request.user
-        if user is None:
-            logger.warning('User not found')
-            raise exceptions.APIException('User is not logged in')
-        
-        if user in group.members.all():
-            logger.warning('User already in group')
-            raise exceptions.APIException('User already in group')
-        
-        group.members.add(user)
-        group.total_members += 1
-        group.save()
+        serializer.save()
+        group = serializer.validated_data['group']
+        user = serializer.validated_data['user']
         logger.info(f"{user.username} joined group {group.name}")
         return Response({'msg':'Successfully joined the announcement group'},status=status.HTTP_200_OK)
 
@@ -268,31 +253,17 @@ class ListUserJoinedAnnouncementGroupView(generics.GenericAPIView):
         return Response(serializer.data)
     
 
-class LeaveAnnouncementGroupView(generics.GenericAPIView):
+class LeaveAnnouncementGroupView(generics.DestroyAPIView):
     permission_classes = [CanViewAnnouncementGroup]
-    serializer_class = JoinAnnouncementGroupsSerializer
+    serializer_class = JoinAnnouncementGroupSerializer
 
-    def post(self, request, *args, **kwargs):
+    def destroy(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         group = serializer.validated_data.get('group')
-        if group is None:
-            logger.warning('Group not found')
-            raise exceptions.ValidationError({'group': 'This field is required.'})
-        
-        user = self.request.user
-        if user is None:
-            logger.warning('User not found')
-            raise exceptions.APIException('User is not logged in')
-        
-        if user not in group.members.all():
-            logger.warning(f'{user.username} already in group {group.name}')
-            raise exceptions.APIException('User not found group in group')
+        user = serializer.validated_data.get('user')
 
-        group.members.remove(user)
-        group.total_members -= 1
-        group.save()
         logger.info(f'{user.username} left group {group.name}')
         return Response({'msg':'Successfully left the announcement group'},status=status.HTTP_200_OK)
     
