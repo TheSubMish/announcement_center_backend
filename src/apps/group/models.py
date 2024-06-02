@@ -24,7 +24,7 @@ class Category(models.TextChoices):
 class AnnouncementGroup(Group):
     group_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     description = models.TextField(null=False,blank=False)
-    image = models.ImageField(default='',validators=[image_validate])
+    image = models.ImageField(default='',validators=[image_validate],upload_to='groups/')
     admin = models.ForeignKey(User,on_delete=models.SET_NULL,null=True,blank=True)
     category = models.CharField(
         max_length=100,

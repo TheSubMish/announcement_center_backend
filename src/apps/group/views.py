@@ -16,7 +16,7 @@ from .permissions import (
     CanChangeMemberRole,
 )
 from .filters import AnnouncementGroupFilter
-from .models import AnnouncementGroup,Rating,GroupMember
+from .models import AnnouncementGroup,Rating,GroupMember,Role
 from drf_spectacular.utils import extend_schema
 import logging
 
@@ -259,12 +259,27 @@ class LeaveAnnouncementGroupView(generics.DestroyAPIView):
     serializer_class = LeaveAnnouncementGroupSerializer
 
     def destroy(self, request, *args, **kwargs):
+        group_id = self.kwargs['pk']
+        
+        request.data['group'] = group_id
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        group = serializer.validated_data.get('group')
-        user = serializer.validated_data.get('user')
-        GroupMember.objects.delete(user=user, group=group)
+        group = serializer.validated_data['group']
+        user = serializer.validated_data['user']
+
+        try:
+            group_member = GroupMember.objects.get(user=user, group=group)
+        except:
+            logger.warning("User is not a member of the group")
+            raise exceptions.APIException({'error': 'User is not a member of the group'})
+        
+        if group_member.role == Role.ADMIN:
+            logger.warning("Admin cannot leave the group")
+            raise exceptions.APIException({'error': 'Admin cannot leave the group'})
+        
+        group_member.delete()
+
         group.total_members = group.total_members - 1
         group.save()
         logger.info(f'{user.username} left group {group.name}')
@@ -286,9 +301,9 @@ class GiveRatingView(generics.CreateAPIView):
             rating = Rating.objects.get(user=user,group=group)
             rating.rating = serializer.validated_data.get('rating')
             rating.save()
-            logger.info(f'{user.username} updated their rating ({serializer.validated_data['rating']}) to group {group.name}')
+            logger.info(f'{user.username} updated their rating ({serializer.validated_data["rating"]}) to group {group.name}')
         except Rating.DoesNotExist:
-            logger.info(f'{user.username} rated ({serializer.validated_data['rating']}) to group {group.name}')
+            logger.info(f'{user.username} rated ({serializer.validated_data["rating"]}) to group {group.name}')
             serializer.save()
 
         return Response({'msg':'Group Rated succesfully'},status=status.HTTP_201_CREATED)

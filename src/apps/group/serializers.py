@@ -149,15 +149,15 @@ class JoinAnnouncementGroupSerializer(serializers.ModelSerializer):
         return group_member_ship
     
 class LeaveAnnouncementGroupSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:
         model = GroupMember
-        fields = ['group','user','role']
+        fields = ['group','user']
 
     def validate(self, attrs):
         group = attrs.get('group',None)
         user = attrs.get('user',None)
-        role = attrs.get('role',None)
 
         if group is None:
             logger.warning('Group does not exist')
@@ -167,17 +167,8 @@ class LeaveAnnouncementGroupSerializer(serializers.ModelSerializer):
             logger.warning('User does not exist')
             raise exceptions.ValidationError({'user': 'This field is required.'})
         
-        if role is None:
-            logger.warning('Role does not exist')
-            raise exceptions.ValidationError({'role': 'This field is required.'})
-        
-        if role is Role.ADMIN:
-            logger.warning('Admin cannot leave group')
-            raise exceptions.ValidationError({'user': 'Admin cannot leave group'})
-        
         attrs['group'] = group
         attrs['user'] = user
-        attrs['role'] = role
         
         return attrs
     
