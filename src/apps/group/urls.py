@@ -11,6 +11,8 @@ from .views import (
     LeaveAnnouncementGroupView,
     GiveRatingView,
     RetrieveRatingView,
+    ChangeMemberRoleView,
+    ListGroupMemberView,
 )
 
 urlpatterns = [
@@ -25,4 +27,6 @@ urlpatterns = [
     path('<uuid:pk>/leave/',LeaveAnnouncementGroupView.as_view(),name='leave-announcement-group-api'),
     path('give/rating/',GiveRatingView.as_view(),name='give-rating-api'),
     path('<uuid:pk>/retrieve/rating/',RetrieveRatingView.as_view(),name='retrieve-rating-api'),
+    path('member/role/change/',ChangeMemberRoleView.as_view(),name='change-member-role-api'),
+    path('<uuid:pk>/list/member/',ListGroupMemberView.as_view(),name='list-group-member-api'),
 ]

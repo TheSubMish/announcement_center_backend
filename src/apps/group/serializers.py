@@ -220,7 +220,6 @@ class RatingSerializer(serializers.ModelSerializer):
         return instance
     
 class ChangeMemberRoleSerializer(serializers.ModelSerializer):
-    admin = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:
         model = GroupMember
@@ -243,12 +242,21 @@ class ChangeMemberRoleSerializer(serializers.ModelSerializer):
             logger.warning('Role does not exist')
             raise exceptions.ValidationError({'role': 'This field is required.'})
         
-        if self.admin != group.admin:
-            logger.warning(f'{self.admin.username} is not admin of group {group.name}')
-            raise exceptions.ValidationError({'user': 'User is not admin of group'})
+        try:
+            group_member = GroupMember.objects.get(user=user, group=group)
+        except:
+            logger.warning("User is not a member of the group")
+            raise exceptions.APIException({'error': 'User is not a member of the group'})
         
-        attrs['group'] = group
-        attrs['user'] = user
-        attrs['role'] = role
+        group_admin = self.context['request'].user
+        if group.admin != group_admin:
+            logger.warning("User is not the group admin")
+            raise exceptions.APIException({'error': 'User is not the group admin'})
+        
+        attrs['group_member'] = group_member
         
         return attrs
+    
+class ListGroupMemberSerializer(serializers.Serializer):
+    user = serializers.CharField(max_length=255)
+    role = serializers.CharField(max_length=255)

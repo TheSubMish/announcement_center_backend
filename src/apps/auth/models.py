@@ -48,7 +48,7 @@ class User(BaseModel,AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['email','first_name','last_name']
 
     def __str__(self):
-        return self.email
+        return self.username
 
 class UserModelMixin(models.Model):
     admin = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
