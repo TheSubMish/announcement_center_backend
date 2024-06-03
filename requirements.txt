@@ -10,6 +10,7 @@ click==8.1.7
 click-didyoumean==0.3.1
 click-plugins==1.1.1
 click-repl==0.3.0
+cramjam==2.8.3
 decorator==5.1.1
 Django==5.0.4
 django-cors-headers==4.3.1
@@ -17,6 +18,7 @@ django-filter==24.2
 django-user-agents==0.4.0
 djangorestframework==3.15.1
 djangorestframework-simplejwt==5.3.1
+dnspython==2.6.1
 drf-spectacular==0.27.2
 drf-standardized-errors==0.13.0
 environs==11.0.0
@@ -33,8 +35,11 @@ pillow==10.3.0
 prompt-toolkit==3.0.43
 psycopg2-binary==2.9.9
 PyJWT==2.8.0
+pykerberos==1.2.4
+pymongo==4.7.2
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
+python-snappy==0.7.1
 PyYAML==6.0.1
 ratelim==0.1.6
 redis==5.0.3
