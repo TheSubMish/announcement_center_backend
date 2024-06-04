@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'src.apps.common',
     'src.apps.group.apps.GroupConfig',
     'src.apps.payment',
+    'src.apps.notification',
 ]
 
 MIDDLEWARE = [
@@ -93,7 +94,7 @@ else:
         "default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3"}
     }
 
-
+MONGODB = "announcementdb"
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
