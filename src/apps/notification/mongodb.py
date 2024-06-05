@@ -11,6 +11,6 @@ class MongoDB:
         self._connection_string =os.environ.get("MONGODB_CONNECTION_STRING")
 
     def connect_db(self, db_name):
-        return MongoClient(self._connection_string)[db_name]
+        return MongoClient(self._connection_string,uuidRepresentation='standard')[db_name]
 
 database = MongoDB()

@@ -15,7 +15,7 @@ class CreateAnnouncementSerializer(serializers.ModelSerializer):
             'image', 
             'group',
             'payment_method',
-            'admin',
+            'user',
         )
 
     def create(self, validated_data):
@@ -23,7 +23,7 @@ class CreateAnnouncementSerializer(serializers.ModelSerializer):
         description = validated_data.get('description',None)
         image = validated_data.get('image',None)
         payment_method = validated_data.get('payment_method',None)
-        admin = self.context['request'].user
+        user = self.context['request'].user
         group = validated_data.get('group',None)
 
         detector = SpamWordDetect(description)
@@ -35,10 +35,10 @@ class CreateAnnouncementSerializer(serializers.ModelSerializer):
             description=description,
             image=image,
             payment_method=payment_method,
-            admin=admin,
+            user=user,
             group=group
         )
-        logger.info(f'announcement created: {announcement.title} by user: {announcement.admin}')
+        logger.info(f'announcement created: {announcement.title} by user: {announcement.user}')
         return announcement
     
 
@@ -59,7 +59,7 @@ class UpdateAnnouncementSerializer(serializers.ModelSerializer):
         instance.image = validated_data.get('image',instance.image)
         instance.payment_method = validated_data.get('payment_method',instance.payment_method)
         instance.save()
-        logger.info(f'announcement updated: {instance.title} by user: {instance.admin}')
+        logger.info(f'announcement updated: {instance.title} by user: {instance.user}')
         print(logger)
         return instance
     
