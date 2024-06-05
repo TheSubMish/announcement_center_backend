@@ -69,7 +69,7 @@ class UserLoginView(generics.GenericAPIView):
                 logger.info(f'{user.username} device information updated')
             except Device.DoesNotExist:
                 device = Device.objects.create(
-                    admin = user,
+                    user = user,
                     device_ip=str(get_user_ip(self.request)),
                     device_type = self.request.user_agent.device.family, # type:ignore
                     location=f"{user_ip.city},{user_ip.state},{user_ip.country}",

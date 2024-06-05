@@ -51,7 +51,7 @@ class User(BaseModel,AbstractBaseUser, PermissionsMixin):
         return self.username
 
 class UserModelMixin(models.Model):
-    admin = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
 
     class Meta:
         abstract = True
