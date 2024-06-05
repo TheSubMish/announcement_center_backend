@@ -14,17 +14,19 @@ class CreateAnnouncementSerializer(serializers.ModelSerializer):
             'description', 
             'image', 
             'group',
-            'payment_method',
             'user',
+            'announcement_type',
+            'event_date'
         )
 
     def create(self, validated_data):
         title = validated_data.get('title',None)
         description = validated_data.get('description',None)
         image = validated_data.get('image',None)
-        payment_method = validated_data.get('payment_method',None)
+        announcement_type = validated_data.get('announcement_type',None)
         user = self.context['request'].user
         group = validated_data.get('group',None)
+        event_date = validated_data.get('event_date',None)
 
         detector = SpamWordDetect(description)
         if detector.is_spam():
@@ -34,9 +36,10 @@ class CreateAnnouncementSerializer(serializers.ModelSerializer):
             title=title,
             description=description,
             image=image,
-            payment_method=payment_method,
+            announcement_type=announcement_type,
             user=user,
-            group=group
+            group=group,
+            event_date=event_date
         )
         logger.info(f'announcement created: {announcement.title} by user: {announcement.user}')
         return announcement
@@ -49,15 +52,17 @@ class UpdateAnnouncementSerializer(serializers.ModelSerializer):
         fields = (
             'title',
             'description', 
-            'image', 
-            'payment_method',
+            'image',
+            'announcement_type',
+            'event_date',
         )
 
     def update(self, instance, validated_data):
         instance.title = validated_data.get('title',instance.title)
         instance.description = validated_data.get('description',instance.description)
         instance.image = validated_data.get('image',instance.image)
-        instance.payment_method = validated_data.get('payment_method',instance.payment_method)
+        instance.announcement_type = validated_data.get('announcement_type',instance.announcement_type)
+        instance.event_date = validated_data.get('event_date',instance.event_date)
         instance.save()
         logger.info(f'announcement updated: {instance.title} by user: {instance.user}')
         print(logger)

@@ -1,5 +1,5 @@
 from rest_framework import serializers,exceptions
-from src.apps.group.models import AnnouncementGroup,Rating,GroupMember,Role
+from src.apps.group.models import AnnouncementGroup,Rating,GroupMember,Role,GroupType
 from src.apps.common.utills import SpamWordDetect
 import logging
 from django.db import transaction
@@ -16,6 +16,7 @@ class CreateAnnouncementGroupSerializer(serializers.ModelSerializer):
             'description', 
             'image', 
             'category',
+            'group_type',
         )
 
     def create(self, validated_data):
@@ -23,6 +24,14 @@ class CreateAnnouncementGroupSerializer(serializers.ModelSerializer):
         description = validated_data.get('description',None)
         image = validated_data.get('image',None)
         category = validated_data.get('category',None)
+        group_type = validated_data.get('group_type',None)
+
+        if AnnouncementGroup.objects.filter(name=name).exists():
+            logger.warning(f'Announcement group with name "{name}" already exists')
+            raise serializers.ValidationError({'name': 'Group with this name already exists.'})
+        
+        # if group_type is GroupType.PRIVATE:
+        #     pass
 
         detector = SpamWordDetect(description)
         if detector.is_spam():
@@ -37,6 +46,9 @@ class CreateAnnouncementGroupSerializer(serializers.ModelSerializer):
                 image=image,
                 category=category,
                 admin=admin,
+                group_type=group_type,
+                invite_code=None,
+                total_members=1,
             )
             group_member = GroupMember.objects.create(group=announcement_group,user=admin,role=Role.ADMIN)
         return announcement_group
@@ -50,6 +62,7 @@ class UpdateAnnouncementGroupSerializer(serializers.ModelSerializer):
             'description', 
             'image', 
             'category'
+            'group_type',
         )
 
     def update(self, instance, validated_data):
@@ -63,6 +76,7 @@ class UpdateAnnouncementGroupSerializer(serializers.ModelSerializer):
         instance.description = validated_data.get('description', instance.description)
         instance.image = validated_data.get('image', instance.image)
         instance.category = validated_data.get('category', instance.category)
+        instance.group_type = validated_data.get('group_type', instance.group_type)
         instance.save()
         logger.info('Group updated successfully {instance.name}')
         return instance

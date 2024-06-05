@@ -4,25 +4,23 @@ from src.apps.common.utills import image_validate
 from src.apps.auth.models import UserModelMixin,User
 from src.apps.group.models import GroupModelMixin
 
-class PaymentMethod(models.TextChoices):
-    KHALTI = 'khalti','Khalti'
-    ESEWA = 'e-sewa','E-SEWA'
-    PAYPAL = 'paypal','Paypal'
+class AnnouncementType(models.TextChoices):
+    PUBLIC = 'public','Public'
+    PRIVATE = 'private','Private'
 
 class Announcement(BaseModel,UserModelMixin,GroupModelMixin):
     title = models.CharField(max_length=255,null=False, blank=False)
     description = models.TextField(null=False,blank=False)
     image = models.ImageField(null=False,blank=False,validators=[image_validate],upload_to='announcement')
-    paid_for_email = models.BooleanField(default=False)
-    paid_amount = models.FloatField(default=0.0)
-    payment_method = models.CharField(
+    announcement_type = models.CharField(
         max_length=100,
-        null=True,
-        blank=True,
-        choices=PaymentMethod.choices,
-        default=PaymentMethod.KHALTI,
+        null=False,
+        blank=False,
+        choices=AnnouncementType.choices,
+        default=AnnouncementType.PUBLIC,
     )
-    pidx = models.CharField(max_length=255,blank=True,null=True)
+    paid_for_email = models.BooleanField(default=False)
+    event_date = models.DateField(null=True, blank=True)
     
     def __str__(self):
         return self.title

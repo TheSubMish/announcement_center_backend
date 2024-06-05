@@ -20,6 +20,10 @@ class Category(models.TextChoices):
     TRAVEL = 'travel','Travel'
     OTHER = 'other','Other'
 
+class GroupType(models.TextChoices):
+    PUBLIC = 'public','Public'
+    PRIVATE = 'private','Private'
+
 # Create your models here.
 class AnnouncementGroup(Group):
     group_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -33,6 +37,14 @@ class AnnouncementGroup(Group):
         choices=Category.choices,
         default=Category.WEB,
     )
+    group_type = models.CharField(
+        max_length=100,
+        null=False,
+        blank=False,
+        choices=GroupType.choices,
+        default=GroupType.PUBLIC
+    )
+    invite_code = models.CharField(max_length=10,null=True,blank=True)
     total_members = models.IntegerField(default=1)
 
     created_at = models.DateTimeField(auto_now_add=True)
