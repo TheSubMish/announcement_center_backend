@@ -43,7 +43,7 @@ class UpdateAnnouncementView(generics.UpdateAPIView):
     def get_object(self):
         id = self.kwargs.get('pk', None)
         try:
-            announcement = Announcement.objects.get(id=id)
+            announcement = Announcement.objects.select_related("user","group").get(id=id)
         except Announcement.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement does not exist'})
         return announcement
@@ -61,7 +61,7 @@ class ListAnnouncementsView(generics.ListAPIView):
         except AnnouncementGroup.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement group does not exist'})
         
-        announcements = Announcement.objects.filter(group=announcement_group).order_by('-created_at')
+        announcements = Announcement.objects.select_related("user","group").filter(group=announcement_group).order_by('-created_at')
         return announcements
     
 
@@ -73,7 +73,7 @@ class RetrieveAnnouncementView(generics.RetrieveAPIView):
     def get_object(self):
         id = self.kwargs.get('pk', None)
         try:
-            announcement = Announcement.objects.get(id=id)
+            announcement = Announcement.objects.select_related("user","group").get(id=id)
         except Announcement.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement does not exist'})
         return announcement

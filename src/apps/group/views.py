@@ -19,6 +19,7 @@ from .permissions import (
 )
 from .filters import AnnouncementGroupFilter
 from .models import AnnouncementGroup,Rating,GroupMember,Role
+from src.apps.common.models import Status
 from drf_spectacular.utils import extend_schema
 import logging
 
@@ -86,7 +87,7 @@ class ListAnnouncementGroupView(generics.ListAPIView):
     filterset_class = AnnouncementGroupFilter
 
     def get_queryset(self):
-        queryset = AnnouncementGroup.objects.all()
+        queryset = AnnouncementGroup.objects.filter(status=Status.ACTIVE)
         filtered_queryset = self.filter_queryset(queryset)
         return filtered_queryset
 
@@ -98,12 +99,15 @@ class ListAnnouncementGroupView(generics.ListAPIView):
                     'name':'string',
                     'description':'string', 
                     'image':'image file', 
-                    'average_rating':'float',
+                    'admin':'string',
                     'category':'string',
-                    'joined':'boolean',
-                    'admin_id':'string(uuid)',
-                    'members':'array of user id',
+                    'group_type': 'string',
                     'total_members':'number',
+                    'location': 'string',
+                    'invite_code':'string',
+                    'code_expires_at':'Date time',
+                    'average_rating':'float',
+                    'joined':'boolean',
                     'created_at':'Date time'
                 }
             }
@@ -133,12 +137,15 @@ class RetrieveAnnouncementGroupView(generics.RetrieveAPIView):
                     'name':'string',
                     'description':'string', 
                     'image':'image file', 
-                    'average_rating':'float',
+                    'admin':'string',
                     'category':'string',
-                    'joined':'boolean',
-                    'admin_id':'string(uuid)',
-                    'members':'array of user id',
+                    'group_type': 'string',
                     'total_members':'number',
+                    'location': 'string',
+                    'invite_code':'string',
+                    'code_expires_at':'Date time',
+                    'average_rating':'float',
+                    'joined':'boolean',
                     'created_at':'Date time'
                 }
             }
@@ -147,7 +154,7 @@ class RetrieveAnnouncementGroupView(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         group_id = self.kwargs['pk']
         try:
-            announcement_group = AnnouncementGroup.objects.get(group_id=group_id)
+            announcement_group = AnnouncementGroup.objects.get(group_id=group_id,status=Status.ACTIVE)
         except AnnouncementGroup.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement group does not exist'})
         
@@ -163,7 +170,7 @@ class ListUserCreatedAnnouncementGroupView(generics.ListAPIView):
 
     def get_queryset(self):
         admin_id = self.request.user.id
-        qs = AnnouncementGroup.objects.filter(admin_id=admin_id)
+        qs = AnnouncementGroup.objects.filter(admin_id=admin_id,status=Status.ACTIVE)
         return qs
     
     @extend_schema(
@@ -174,12 +181,15 @@ class ListUserCreatedAnnouncementGroupView(generics.ListAPIView):
                     'name':'string',
                     'description':'string', 
                     'image':'image file', 
+                    'admin':'string',
                     'category':'string',
+                    'group_type': 'string',
+                    'total_members':'number',
+                    'location': 'string',
+                    'invite_code':'string',
+                    'code_expires_at':'Date time',
                     'average_rating':'float',
                     'joined':'boolean',
-                    'admin_id':'string(uuid)',
-                    'members':'array of user id',
-                    'total_members':'number',
                     'created_at':'Date time'
                 }
             }
@@ -221,7 +231,7 @@ class ListUserJoinedAnnouncementGroupView(generics.GenericAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        qs = AnnouncementGroup.objects.filter(members__pk=user.pk)
+        qs = AnnouncementGroup.objects.filter(members__pk=user.pk,status=Status.ACTIVE)
         return qs
 
     @extend_schema(

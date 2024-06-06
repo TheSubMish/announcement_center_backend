@@ -21,6 +21,7 @@ class Announcement(BaseModel,UserModelMixin,GroupModelMixin):
     )
     paid_for_email = models.BooleanField(default=False)
     event_date = models.DateField(null=True, blank=True)
+    event_location = models.CharField(max_length=255,null=True, blank=True)
     
     def __str__(self):
         return self.title

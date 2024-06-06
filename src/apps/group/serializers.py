@@ -3,6 +3,8 @@ from src.apps.group.models import AnnouncementGroup,Rating,GroupMember,Role,Grou
 from src.apps.common.utills import SpamWordDetect
 import logging
 from django.db import transaction
+from django.utils.crypto import get_random_string
+from django.utils import timezone
 
 logger = logging.getLogger('info_logger')
 
@@ -17,6 +19,7 @@ class CreateAnnouncementGroupSerializer(serializers.ModelSerializer):
             'image', 
             'category',
             'group_type',
+            'location',
         )
 
     def create(self, validated_data):
@@ -25,13 +28,17 @@ class CreateAnnouncementGroupSerializer(serializers.ModelSerializer):
         image = validated_data.get('image',None)
         category = validated_data.get('category',None)
         group_type = validated_data.get('group_type',None)
+        location = validated_data.get('location',None)
 
         if AnnouncementGroup.objects.filter(name=name).exists():
             logger.warning(f'Announcement group with name "{name}" already exists')
             raise serializers.ValidationError({'name': 'Group with this name already exists.'})
         
-        # if group_type is GroupType.PRIVATE:
-        #     pass
+        invite_code = None
+        code_expires_at = None
+        if group_type == GroupType.PRIVATE:
+            invite_code = get_random_string(length=20)
+            code_expires_at = timezone.now() + timezone.timedelta(days=7)
 
         detector = SpamWordDetect(description)
         if detector.is_spam():
@@ -47,10 +54,12 @@ class CreateAnnouncementGroupSerializer(serializers.ModelSerializer):
                 category=category,
                 admin=admin,
                 group_type=group_type,
-                invite_code=None,
                 total_members=1,
+                location=location,
+                invite_code=invite_code,
+                code_expires_at=code_expires_at    
             )
-            group_member = GroupMember.objects.create(group=announcement_group,user=admin,role=Role.ADMIN)
+            GroupMember.objects.create(group=announcement_group,user=admin,role=Role.ADMIN)
         return announcement_group
     
 class UpdateAnnouncementGroupSerializer(serializers.ModelSerializer):
@@ -63,6 +72,7 @@ class UpdateAnnouncementGroupSerializer(serializers.ModelSerializer):
             'image', 
             'category'
             'group_type',
+            'location',
         )
 
     def update(self, instance, validated_data):
@@ -77,6 +87,7 @@ class UpdateAnnouncementGroupSerializer(serializers.ModelSerializer):
         instance.image = validated_data.get('image', instance.image)
         instance.category = validated_data.get('category', instance.category)
         instance.group_type = validated_data.get('group_type', instance.group_type)
+        instance.location = validated_data.get('location', instance.location)
         instance.save()
         logger.info('Group updated successfully {instance.name}')
         return instance
@@ -93,11 +104,15 @@ class AnnouncementGroupSerializer(serializers.ModelSerializer):
             'name',
             'description', 
             'image', 
+            'admin',
             'category',
+            'group_type',
+            'total_members',
+            'location',
+            'invite_code',
+            'code_expires_at',
             'average_rating',
             'joined',
-            'admin',
-            'total_members',
             'created_at',
             'updated_at',
         )
