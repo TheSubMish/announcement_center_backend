@@ -3,7 +3,7 @@ from django.contrib.auth.models import Group
 from src.apps.auth.models import User
 from src.apps.common.utills import image_validate
 import uuid
-from src.apps.common.models import BaseModel
+from src.apps.common.models import BaseModel,Status
 from django.db.models import Avg
 
 class Category(models.TextChoices):
@@ -50,6 +50,13 @@ class AnnouncementGroup(Group):
     invite_code = models.CharField(max_length=10,null=True,blank=True)
     code_expires_at = models.DateTimeField(null=True, blank=True)
 
+    status = models.CharField(
+        max_length=20,
+        null=False,
+        blank=False,
+        choices=Status.choices,
+        default=Status.ACTIVE
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

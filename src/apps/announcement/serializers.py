@@ -16,7 +16,8 @@ class CreateAnnouncementSerializer(serializers.ModelSerializer):
             'group',
             'user',
             'announcement_type',
-            'event_date'
+            'event_date',
+            'event_location',
         )
 
     def create(self, validated_data):
@@ -27,6 +28,7 @@ class CreateAnnouncementSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         group = validated_data.get('group',None)
         event_date = validated_data.get('event_date',None)
+        event_location = validated_data.get('event_location',None)
 
         detector = SpamWordDetect(description)
         if detector.is_spam():
@@ -39,7 +41,8 @@ class CreateAnnouncementSerializer(serializers.ModelSerializer):
             announcement_type=announcement_type,
             user=user,
             group=group,
-            event_date=event_date
+            event_date=event_date,
+            event_location=event_location,
         )
         logger.info(f'announcement created: {announcement.title} by user: {announcement.user}')
         return announcement
@@ -55,6 +58,7 @@ class UpdateAnnouncementSerializer(serializers.ModelSerializer):
             'image',
             'announcement_type',
             'event_date',
+            'event_location',
         )
 
     def update(self, instance, validated_data):
@@ -63,6 +67,7 @@ class UpdateAnnouncementSerializer(serializers.ModelSerializer):
         instance.image = validated_data.get('image',instance.image)
         instance.announcement_type = validated_data.get('announcement_type',instance.announcement_type)
         instance.event_date = validated_data.get('event_date',instance.event_date)
+        instance.event_location = validated_data.get('event_location',instance.event_location)
         instance.save()
         logger.info(f'announcement updated: {instance.title} by user: {instance.user}')
         print(logger)
