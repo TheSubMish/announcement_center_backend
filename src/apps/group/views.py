@@ -18,9 +18,10 @@ from .permissions import (
     CanChangeMemberRole,
 )
 from .filters import AnnouncementGroupFilter
-from .models import AnnouncementGroup,Rating,GroupMember,Role
+from .models import AnnouncementGroup,Rating,GroupMember,Role,GroupType
 from src.apps.common.models import Status
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 import logging
 
 logger = logging.getLogger('info_logger')
@@ -36,10 +37,20 @@ class CreateAnnouncementGroupView(generics.CreateAPIView):
                     "name":"string",
                     "description":"string",
                     "imgae": "image file",
-                    "category": "string"
+                    "category": "string",
+                    "group_type": "string",
+                    "location": "string",
                 }
             }
-        }
+        },
+        parameters=[
+            OpenApiParameter(
+                name='group_type',
+                type=OpenApiTypes.STR,
+                enum=[choice[0] for choice in GroupType.choices],
+                description='The type of the group: public or private.',
+            ),
+        ]
     )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -111,7 +122,15 @@ class ListAnnouncementGroupView(generics.ListAPIView):
                     'created_at':'Date time'
                 }
             }
-        }
+        },
+        parameters=[
+            OpenApiParameter(
+                name='group_type',
+                type=OpenApiTypes.STR,
+                enum=[choice[0] for choice in GroupType.choices],
+                description='The type of the group: public or private.',
+            ),
+        ]
     )
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -149,7 +168,15 @@ class RetrieveAnnouncementGroupView(generics.RetrieveAPIView):
                     'created_at':'Date time'
                 }
             }
-        }
+        },
+        parameters=[
+            OpenApiParameter(
+                name='group_type',
+                type=OpenApiTypes.STR,
+                enum=[choice[0] for choice in GroupType.choices],
+                description='The type of the group: public or private.',
+            ),
+        ]
     )
     def get(self, request, *args, **kwargs):
         group_id = self.kwargs['pk']
@@ -193,7 +220,15 @@ class ListUserCreatedAnnouncementGroupView(generics.ListAPIView):
                     'created_at':'Date time'
                 }
             }
-        }
+        },
+        parameters=[
+            OpenApiParameter(
+                name='group_type',
+                type=OpenApiTypes.STR,
+                enum=[choice[0] for choice in GroupType.choices],
+                description='The type of the group: public or private.',
+            ),
+        ]
     )
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -252,6 +287,15 @@ class ListUserJoinedAnnouncementGroupView(generics.GenericAPIView):
                 }
             }
         }
+        ,
+        parameters=[
+            OpenApiParameter(
+                name='group_type',
+                type=OpenApiTypes.STR,
+                enum=[choice[0] for choice in GroupType.choices],
+                description='The type of the group: public or private.',
+            ),
+        ]
     )
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -266,14 +310,11 @@ class ListUserJoinedAnnouncementGroupView(generics.GenericAPIView):
         return Response(serializer.data)
     
 
-class LeaveAnnouncementGroupView(generics.DestroyAPIView):
+class LeaveAnnouncementGroupView(generics.GenericAPIView):
     permission_classes = [CanViewAnnouncementGroup]
     serializer_class = LeaveAnnouncementGroupSerializer
 
-    def destroy(self, request, *args, **kwargs):
-        group_id = self.kwargs['pk']
-        
-        request.data['group'] = group_id
+    def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -281,7 +322,7 @@ class LeaveAnnouncementGroupView(generics.DestroyAPIView):
         user = serializer.validated_data['user']
 
         try:
-            group_member = GroupMember.objects.get(user=user, group=group)
+            group_member = GroupMember.objects.get(user=user, group=group,status=Status.ACTIVE)
         except:
             logger.warning("User is not a member of the group")
             raise exceptions.APIException({'error': 'User is not a member of the group'})
@@ -290,7 +331,7 @@ class LeaveAnnouncementGroupView(generics.DestroyAPIView):
             logger.warning("Admin cannot leave the group")
             raise exceptions.APIException({'error': 'Admin cannot leave the group'})
         
-        group_member.delete()
+        group_member.status = Status.INACTIVE
 
         group.total_members = group.total_members - 1
         group.save()

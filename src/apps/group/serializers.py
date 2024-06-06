@@ -70,7 +70,7 @@ class UpdateAnnouncementGroupSerializer(serializers.ModelSerializer):
             'name',
             'description', 
             'image', 
-            'category'
+            'category',
             'group_type',
             'location',
         )
