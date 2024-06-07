@@ -130,19 +130,34 @@ class AnnouncementGroupSerializer(serializers.ModelSerializer):
     
 class JoinAnnouncementGroupSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    invite_code = serializers.CharField(max_length=10,allow_blank=True,required=False)
 
     class Meta:
         model = GroupMember
-        fields = ['group','user','role']
+        fields = ['group','user','role','invite_code']
     
     def validate(self, attrs):
         group = attrs.get('group',None)
         user = attrs.get('user',None)
         role = attrs.get('role',None)
+        invite_code = attrs.get('invite_code',None)
 
         if group is None:
             logger.warning('Group does not exist')
             raise exceptions.ValidationError({'group': 'This field is required.'})
+        
+        if group.group_type == GroupType.PRIVATE:
+            if invite_code is None:
+                logger.warning('Invite code is required')
+                raise exceptions.ValidationError({'invite_code': 'This field is required.'})
+            
+            if group.invite_code != invite_code:
+                logger.warning('Invite code is required')
+                raise exceptions.ValidationError({'invite_code': 'This field is required.'})
+
+            if group.code_expires_at > timezone.now():
+                logger.warning('Invite code expires')
+                raise exceptions.ValidationError({'invite_code': 'Invite code expires'})
         
         if user is None:
             logger.warning('User does not exist')
