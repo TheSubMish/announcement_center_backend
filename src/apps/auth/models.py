@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.db import models
 from django.utils import timezone
 from src.apps.common.utills import image_validate
-from src.apps.common.models import BaseModel
+from src.apps.common.models import BaseModel,Status
 
 class UserManager(BaseUserManager):
     def create_user(self, username, email, password=None, **extra_fields):
@@ -49,6 +49,10 @@ class User(BaseModel,AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.username
+    
+    def delete(self, *args, **kwargs):
+        self.status = Status.INACTIVE
+        self.save()
 
 class UserModelMixin(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
@@ -73,3 +77,7 @@ class Device(BaseModel, UserModelMixin):
 
     def __str__(self) -> str:
         return self.device_ip
+    
+    def delete(self, *args, **kwargs):
+        self.status = Status.INACTIVE
+        self.save()

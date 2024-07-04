@@ -66,6 +66,10 @@ class AnnouncementGroup(Group):
     def __str__(self):
         return self.name
     
+    def delete(self, *args, **kwargs):
+        self.status = Status.INACTIVE
+        self.save()
+    
 class GroupModelMixin(models.Model):
     group = models.ForeignKey(AnnouncementGroup,on_delete=models.CASCADE)
 
@@ -80,6 +84,10 @@ class Rating(BaseModel):
 
     def __str__(self) -> str:
         return self.user.username
+    
+    def delete(self, *args, **kwargs):
+        self.status = Status.INACTIVE
+        self.save()
     
 class Role(models.TextChoices):
     MEMBER = 'member','Member'
@@ -96,3 +104,7 @@ class GroupMember(BaseModel):
         choices=Role.choices,
         default=Role.MEMBER,
     )
+
+    def delete(self, *args, **kwargs):
+        self.status = Status.INACTIVE
+        self.save()

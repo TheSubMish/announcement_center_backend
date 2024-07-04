@@ -1,10 +1,11 @@
+from typing import Any
 from django.db import models
-from src.apps.common.models import BaseModel
+from src.apps.common.models import BaseModel,Status
 from src.apps.common.utills import image_validate
 from src.apps.auth.models import UserModelMixin,User
 from src.apps.group.models import GroupModelMixin
 
-class AnnouncementType(models.TextChoices):
+class AnnouncementVisibilty(models.TextChoices):
     PUBLIC = 'public','Public'
     PRIVATE = 'private','Private'
 
@@ -16,12 +17,16 @@ class Announcement(BaseModel,UserModelMixin,GroupModelMixin):
         max_length=100,
         null=False,
         blank=False,
-        choices=AnnouncementType.choices,
-        default=AnnouncementType.PUBLIC,
+        choices=AnnouncementVisibilty.choices,
+        default=AnnouncementVisibilty.PUBLIC,
     )
     paid_for_email = models.BooleanField(default=False)
     event_date = models.DateField(null=True, blank=True)
     event_location = models.CharField(max_length=255,null=True, blank=True)
+
+    def delete(self, *args, **kwargs):
+        self.status = Status.INACTIVE
+        self.save()
     
     def __str__(self):
         return self.title
@@ -48,3 +53,7 @@ class AnnouncementComment(BaseModel):
             level += 1
             p = p.parent
         return level
+    
+    def delete(self, *args, **kwargs):
+        self.status = Status.INACTIVE
+        self.save()
