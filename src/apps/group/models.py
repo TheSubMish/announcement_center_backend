@@ -45,9 +45,9 @@ class AnnouncementGroup(Group):
         default=GroupType.PUBLIC
     )
     total_members = models.IntegerField(default=1)
-    location = models.CharField(max_length=10,null=True,blank=True)
+    location = models.CharField(max_length=255,null=True,blank=True)
 
-    invite_code = models.CharField(max_length=10,null=True,blank=True)
+    invite_code = models.CharField(max_length=255,null=True,blank=True)
     code_expires_at = models.DateTimeField(null=True, blank=True)
 
     status = models.CharField(

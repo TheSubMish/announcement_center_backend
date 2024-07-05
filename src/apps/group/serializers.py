@@ -37,7 +37,7 @@ class CreateAnnouncementGroupSerializer(serializers.ModelSerializer):
         invite_code = None
         code_expires_at = None
         if group_type == GroupType.PRIVATE:
-            invite_code = get_random_string(length=20)
+            invite_code = get_random_string(length=5)
             code_expires_at = timezone.now() + timezone.timedelta(days=7)
 
         detector = SpamWordDetect(description)
