@@ -152,10 +152,10 @@ class JoinAnnouncementGroupSerializer(serializers.ModelSerializer):
                 raise exceptions.ValidationError({'invite_code': 'This field is required.'})
             
             if group.invite_code != invite_code:
-                logger.warning('Invite code is required')
-                raise exceptions.ValidationError({'invite_code': 'This field is required.'})
+                logger.warning(f'Invalid invite code inserted by {user}')
+                raise exceptions.ValidationError({'invite_code': 'Not a valid invite code.'})
 
-            if group.code_expires_at > timezone.now():
+            if group.code_expires_at < timezone.now():
                 logger.warning('Invite code expires')
                 raise exceptions.ValidationError({'invite_code': 'Invite code expires'})
         
