@@ -137,7 +137,13 @@ class ListAnnouncementCommentsView(generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         announcement_comments = self.get_queryset()
+        filter_queryset = self.filter_queryset(announcement_comments)
+        if self.pagination_class:
+            page = self.paginate_queryset(filter_queryset)
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(instance=announcement_comments,many=True)
+       
         return Response(serializer.data,status=status.HTTP_200_OK)
 
 class RetrieveAnnouncementCommentsView(generics.RetrieveAPIView):
