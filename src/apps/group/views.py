@@ -9,6 +9,7 @@ from .serializers import (
     RatingSerializer,
     ChangeMemberRoleSerializer,
     ListGroupMemberSerializer,
+    GroupCategorySerializer,
 )
 from .permissions import (
     CanCreateAnnouncementGroup,
@@ -18,13 +19,21 @@ from .permissions import (
     CanChangeMemberRole,
 )
 from .filters import AnnouncementGroupFilter
-from .models import AnnouncementGroup,Rating,GroupMember,Role,GroupType
+from .models import AnnouncementGroup,Rating,GroupMember,Role,GroupType,Category
 from src.apps.common.models import Status
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 import logging
 
 logger = logging.getLogger('info_logger')
+
+class CreateGroupCategoryView(generics.CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = GroupCategorySerializer
+
+class ListGroupCategoryView(generics.ListAPIView):
+    serializer_class = GroupCategorySerializer
+    queryset = Category.objects.all()
 
 class CreateAnnouncementGroupView(generics.CreateAPIView):
     permission_classes = [CanCreateAnnouncementGroup]

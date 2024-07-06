@@ -1,5 +1,5 @@
 from rest_framework import serializers,exceptions
-from src.apps.group.models import AnnouncementGroup,Rating,GroupMember,Role,GroupType
+from src.apps.group.models import AnnouncementGroup,Rating,GroupMember,Role,GroupType,Category
 from src.apps.common.utills import SpamWordDetect
 import logging
 from django.db import transaction
@@ -7,6 +7,18 @@ from django.utils.crypto import get_random_string
 from django.utils import timezone
 
 logger = logging.getLogger('info_logger')
+
+class GroupCategorySerializer(serializers.ModelSerializer):
+    created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    class Meta:
+        model = Category
+        fields = ('id', 'name', 'created_by')
+
+    def validate_name(self, value):
+        if Category.objects.filter(name=value).exists():
+            raise serializers.ValidationError('Category with this name already exists.')
+        return value
 
 class CreateAnnouncementGroupSerializer(serializers.ModelSerializer):
 
