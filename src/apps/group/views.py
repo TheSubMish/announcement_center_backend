@@ -266,7 +266,8 @@ class ListUserJoinedAnnouncementGroupView(generics.GenericAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        qs = AnnouncementGroup.objects.filter(members__pk=user.pk,status=Status.ACTIVE)
+        group_ids = GroupMember.objects.filter(user=user, status=Status.ACTIVE).values_list('group_id', flat=True)
+        qs = AnnouncementGroup.objects.filter(group_id__in=group_ids,status=Status.ACTIVE)        
         return qs
 
     @extend_schema(
