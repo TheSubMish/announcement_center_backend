@@ -6,6 +6,15 @@ from src.apps.auth.models import UserModelMixin,User
 from src.apps.group.models import GroupModelMixin
 from django_ckeditor_5.fields import CKEditor5Field
 
+class AnnouncementType(models.TextChoices):
+    EVENT = 'event','Event'
+    NEWS = 'news','News'
+    UPDATE = 'update','Update'
+    OFFER = 'offer','Offer'
+    PRODUCTLAUNCH = 'product launch','Product Launch'
+    TRAINING = 'training','Training'
+    BOOTCAMPS = 'bootcamp','Bootcamp'
+
 class AnnouncementVisibilty(models.TextChoices):
     PUBLIC = 'public','Public'
     PRIVATE = 'private','Private'
@@ -26,6 +35,13 @@ class Announcement(BaseModel,UserModelMixin,GroupModelMixin):
         blank=False,
         choices=AnnouncementVisibilty.choices,
         default=AnnouncementVisibilty.PUBLIC,
+    )
+    announcement_type = models.CharField(
+        max_length=100,
+        null=False,
+        blank=False,
+        choices=AnnouncementType.choices,
+        default=AnnouncementType.EVENT,
     )
     
     date = models.DateField(null=True, blank=True)
