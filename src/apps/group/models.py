@@ -5,20 +5,18 @@ from src.apps.common.utills import image_validate
 import uuid
 from src.apps.common.models import BaseModel,Status
 from django.db.models import Avg
+from django_ckeditor_5.fields import CKEditor5Field
 
-class Category(models.TextChoices):
-    WEB = 'web','Web'
-    NETWORK = 'network','Network'
-    CYBER = 'cyber','Cyber'
-    CLOUD = 'cloud','Cloud'
-    ART = 'art','Art'
-    FOOD = 'food','Food'
-    ENTERTAINMENT = 'entertainment','Entertainment'
-    HEALTH = 'health','Health'
-    LIFESTYLE = 'lifestyle','Lifestyle'
-    SPORTS ='sports','Sports'
-    TRAVEL = 'travel','Travel'
-    OTHER = 'other','Other'
+class Category(BaseModel):
+    name = models.CharField(max_length=255,null=False,blank=False)
+    created_by = models.ForeignKey(User,null=True,blank=True,on_delete=models.SET_NULL)
+
+    def delete(self, *args, **kwargs):
+        self.status = Status.INACTIVE
+        self.save()
+
+    def __str__(self) -> str:
+        return self.name
 
 class GroupType(models.TextChoices):
     PUBLIC = 'public','Public'
@@ -27,16 +25,10 @@ class GroupType(models.TextChoices):
 # Create your models here.
 class AnnouncementGroup(Group):
     group_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    description = models.TextField(null=False,blank=False)
+    description = CKEditor5Field('Description',config_name='extends')
     image = models.ImageField(default='',validators=[image_validate],upload_to='groups/')
     admin = models.ForeignKey(User,on_delete=models.SET_NULL,null=True,blank=True)
-    category = models.CharField(
-        max_length=100,
-        null=False,
-        blank=False,
-        choices=Category.choices,
-        default=Category.WEB,
-    )
+    category = models.ForeignKey(Category,null=True,blank=True,on_delete=models.SET_NULL)
     group_type = models.CharField(
         max_length=100,
         null=False,
@@ -49,6 +41,8 @@ class AnnouncementGroup(Group):
 
     invite_code = models.CharField(max_length=255,null=True,blank=True)
     code_expires_at = models.DateTimeField(null=True, blank=True)
+
+    premium_group = models.BooleanField(default=False)
 
     status = models.CharField(
         max_length=20,

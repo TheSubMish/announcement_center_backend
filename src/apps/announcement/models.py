@@ -4,6 +4,7 @@ from src.apps.common.models import BaseModel,Status
 from src.apps.common.utills import image_validate
 from src.apps.auth.models import UserModelMixin,User
 from src.apps.group.models import GroupModelMixin
+from django_ckeditor_5.fields import CKEditor5Field
 
 class AnnouncementVisibilty(models.TextChoices):
     PUBLIC = 'public','Public'
@@ -11,18 +12,24 @@ class AnnouncementVisibilty(models.TextChoices):
 
 class Announcement(BaseModel,UserModelMixin,GroupModelMixin):
     title = models.CharField(max_length=255,null=False, blank=False)
-    description = models.TextField(null=False,blank=False)
+    description = CKEditor5Field('Description',config_name='extends')
     image = models.ImageField(null=False,blank=False,validators=[image_validate],upload_to='announcement')
-    announcement_type = models.CharField(
+    location = models.CharField(max_length=255,null=True, blank=True)
+
+    link = models.URLField(null=True, blank=True)
+    contact_name = models.CharField(max_length=255, null=True, blank=True)
+    contact_email = models.EmailField(null=True, blank=True)
+
+    announcement_visibility = models.CharField(
         max_length=100,
         null=False,
         blank=False,
         choices=AnnouncementVisibilty.choices,
         default=AnnouncementVisibilty.PUBLIC,
     )
-    paid_for_email = models.BooleanField(default=False)
-    event_date = models.DateField(null=True, blank=True)
-    event_location = models.CharField(max_length=255,null=True, blank=True)
+    
+    date = models.DateField(null=True, blank=True)
+    image_description = models.TextField(null=True, blank=True)
 
     def delete(self, *args, **kwargs):
         self.status = Status.INACTIVE
