@@ -1,6 +1,7 @@
 from rest_framework import serializers,exceptions
 from src.apps.group.models import AnnouncementGroup,Rating,GroupMember,Role,GroupType,Category
 from src.apps.common.utills import SpamWordDetect
+from src.apps.common.models import Status
 import logging
 from django.db import transaction
 from django.utils.crypto import get_random_string
@@ -13,7 +14,7 @@ class GroupCategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ('id', 'name', 'created_by')
+        fields = ('id','name', 'created_by')
 
     def validate_name(self, value):
         if Category.objects.filter(name=value).exists():
@@ -25,7 +26,6 @@ class CreateAnnouncementGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnnouncementGroup
         fields = (
-            'id',
             'name',
             'description', 
             'image', 
@@ -38,6 +38,7 @@ class CreateAnnouncementGroupSerializer(serializers.ModelSerializer):
         name = validated_data.get('name',None)
         description = validated_data.get('description',None)
         image = validated_data.get('image',None)
+        admin = self.context.get('request').user
         category = validated_data.get('category',None)
         group_type = validated_data.get('group_type',None)
         location = validated_data.get('location',None)
@@ -55,8 +56,6 @@ class CreateAnnouncementGroupSerializer(serializers.ModelSerializer):
         detector = SpamWordDetect(description)
         if detector.is_spam():
             description = detector.change_spam_word()
-
-        admin = self.context.get('request').user
 
         with transaction.atomic():
             announcement_group = AnnouncementGroup.objects.create(
@@ -146,12 +145,11 @@ class JoinAnnouncementGroupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GroupMember
-        fields = ['group','user','role','invite_code']
+        fields = ['group','user','invite_code']
     
     def validate(self, attrs):
         group = attrs.get('group',None)
         user = attrs.get('user',None)
-        role = attrs.get('role',None)
         invite_code = attrs.get('invite_code',None)
 
         if group is None:
@@ -175,29 +173,23 @@ class JoinAnnouncementGroupSerializer(serializers.ModelSerializer):
             logger.warning('User does not exist')
             raise exceptions.ValidationError({'user': 'This field is required.'})
         
-        if role is None:
-            logger.warning('Role does not exist')
-            raise exceptions.ValidationError({'role': 'This field is required.'})
-        
         if GroupMember.objects.filter(group=group,user=user).exists():
             logger.warning('User is already a member of this group')
             raise exceptions.ValidationError({'user': 'User is already a member of this group'})
         
         attrs['group'] = group
         attrs['user'] = user
-        attrs['role'] = role
         
         return attrs
     
     def create(self, validated_data):
         group = validated_data.get('group',None)
         user = validated_data.get('user',None)
-        role = validated_data.get('role',None)
 
         group_member_ship = GroupMember.objects.create(
             group=group,
             user=user,
-            role=role,
+            role=Role.MEMBER,
         )
 
         group.total_members += 1
@@ -223,13 +215,26 @@ class LeaveAnnouncementGroupSerializer(serializers.ModelSerializer):
             logger.warning('User does not exist')
             raise exceptions.ValidationError({'user': 'This field is required.'})
         
-        attrs['group'] = group
-        attrs['user'] = user
+        try:
+            group_member = GroupMember.objects.get(user=user, group=group,status=Status.ACTIVE)
+        except:
+            logger.warning("User is not a member of the group")
+            raise exceptions.APIException({'error': 'User is not a member of the group'})
+        
+        if group_member.role == Role.ADMIN:
+            logger.warning("Admin cannot leave the group")
+            raise exceptions.APIException({'error': 'Admin cannot leave the group'})
+        
+        group_member.status = Status.INACTIVE
+
+        group.total_members = group.total_members - 1
+        group.save()
         
         return attrs
     
 
 class RatingSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:
         model = Rating
@@ -314,5 +319,9 @@ class ChangeMemberRoleSerializer(serializers.ModelSerializer):
         return attrs
     
 class ListGroupMemberSerializer(serializers.Serializer):
+    user_id = serializers.UUIDField()
     user = serializers.CharField(max_length=255)
     role = serializers.CharField(max_length=255)
+
+    def get_user_id(self,obj):
+        return obj.user.id

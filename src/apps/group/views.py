@@ -32,6 +32,7 @@ class CreateGroupCategoryView(generics.CreateAPIView):
     serializer_class = GroupCategorySerializer
 
 class ListGroupCategoryView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = GroupCategorySerializer
     queryset = Category.objects.all()
 
@@ -330,25 +331,46 @@ class LeaveAnnouncementGroupView(generics.GenericAPIView):
 
         group = serializer.validated_data['group']
         user = serializer.validated_data['user']
-
-        try:
-            group_member = GroupMember.objects.get(user=user, group=group,status=Status.ACTIVE)
-        except:
-            logger.warning("User is not a member of the group")
-            raise exceptions.APIException({'error': 'User is not a member of the group'})
-        
-        if group_member.role == Role.ADMIN:
-            logger.warning("Admin cannot leave the group")
-            raise exceptions.APIException({'error': 'Admin cannot leave the group'})
-        
-        group_member.status = Status.INACTIVE
-
-        group.total_members = group.total_members - 1
-        group.save()
         logger.info(f'{user.username} left group {group.name}')
         return Response({'msg':'Successfully left the announcement group'},status=status.HTTP_200_OK)
     
+class ChangeMemberRoleView(generics.UpdateAPIView):
+    permission_classes = [CanChangeMemberRole]
+    serializer_class = ChangeMemberRoleSerializer
 
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        group_member = serializer.validated_data.get('group_member')
+        
+        group_member.role = serializer.validated_data.get('role')
+        group_member.save()
+
+        return Response({'msg':'Member role updated successfully'},status=status.HTTP_200_OK)
+    
+class ListGroupMemberView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = GroupMember.objects.all()
+    serializer_class = ListGroupMemberSerializer
+
+    def get(self, request,*args, **kwargs):
+        group_id = self.kwargs['pk']
+        try:
+            announcement_group = AnnouncementGroup.objects.get(group_id=group_id)
+        except AnnouncementGroup.DoesNotExist:
+            raise exceptions.APIException({'error': 'Announcement group does not exist'})
+        
+        group_members = GroupMember.objects.filter(group=announcement_group,status=Status.ACTIVE)
+        
+        if self.pagination_class:
+            page = self.paginate_queryset(group_members)
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(group_members, many=True)
+        return Response(serializer.data)
+    
 class GiveRatingView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = RatingSerializer
@@ -390,41 +412,3 @@ class RetrieveRatingView(generics.RetrieveAPIView):
         except Rating.DoesNotExist:
             raise exceptions.APIException({'error': 'Rating does not exist'})
         return rating
-    
-
-class ChangeMemberRoleView(generics.UpdateAPIView):
-    permission_classes = [CanChangeMemberRole]
-    serializer_class = ChangeMemberRoleSerializer
-
-    def update(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        group_member = serializer.validated_data.get('group_member')
-        
-        group_member.role = serializer.validated_data.get('role')
-        group_member.save()
-
-        return Response({'msg':'Member role updated successfully'},status=status.HTTP_200_OK)
-    
-class ListGroupMemberView(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-    queryset = GroupMember.objects.all()
-    serializer_class = ListGroupMemberSerializer
-
-    def get(self, request,*args, **kwargs):
-        group_id = self.kwargs['pk']
-        try:
-            announcement_group = AnnouncementGroup.objects.get(group_id=group_id)
-        except AnnouncementGroup.DoesNotExist:
-            raise exceptions.APIException({'error': 'Announcement group does not exist'})
-        
-        group_members = GroupMember.objects.filter(group=announcement_group)
-        
-        if self.pagination_class:
-            page = self.paginate_queryset(group_members)
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(group_members, many=True)
-        return Response(serializer.data)

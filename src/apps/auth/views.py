@@ -109,6 +109,10 @@ class VerifyLoginOTPView(generics.GenericAPIView):
             token = TokenObtainPairSerializer.get_token(user)
             logger.info(f'User login otp verified: {user.username}')
 
+            user.is_active = True
+            user.last_login = timezone.now()
+            user.save()
+
             return Response(
                 {
                    'refresh':str(token),
