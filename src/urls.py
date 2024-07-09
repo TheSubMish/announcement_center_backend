@@ -18,11 +18,12 @@ urlpatterns = [
         SpectacularRedocView.as_view(url_name="schema"),
         name="redoc",
     ),
+    path("ckeditor5/", include('django_ckeditor_5.urls'), name="ck_editor_5_upload_file"),
     path(f'{api_prefix}/', include([
         path('v1/', include([
             path('user/',include('src.apps.auth.urls')),
             path('group/',include('src.apps.group.urls')),
-            path('announcement/',include('src.apps.announcement.urls')),
+            # path('announcement/',include('src.apps.announcement.urls')),
             # path('payment/',include('src.apps.payment.urls')),
         ]))
     ]))

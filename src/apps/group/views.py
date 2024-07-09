@@ -19,11 +19,13 @@ from .permissions import (
     CanChangeMemberRole,
 )
 from .filters import AnnouncementGroupFilter
-from .models import AnnouncementGroup,Rating,GroupMember,Role,GroupType,Category
+from .models import AnnouncementGroup,Rating,GroupMember,GroupType,Category
 from src.apps.common.models import Status
 from drf_spectacular.utils import extend_schema, OpenApiParameter
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from drf_spectacular.types import OpenApiTypes
 import logging
+import os
 
 logger = logging.getLogger('info_logger')
 
@@ -140,9 +142,32 @@ class ListAnnouncementGroupView(generics.ListAPIView):
                 enum=[choice[0] for choice in GroupType.choices],
                 description='The type of the group: public or private.',
             ),
+            OpenApiParameter(
+                name="q",
+                location=OpenApiParameter.QUERY,
+                description="search query for group",
+                required=False,
+                type=str,
+            ),
         ]
     )
     def get(self, request, *args, **kwargs):
+        # get searched announcement groups
+        searchTerm = self.request.query_params.get("q", "")  # type:ignore
+        if searchTerm :
+            if str(os.environ.get("USE_POSTGRES")).lower() == "false":
+                queryset = AnnouncementGroup.objects.filter(title__icontains=searchTerm)
+            else:
+                search_vector = SearchVector("name",)
+                search_query = SearchQuery(searchTerm)
+                queryset = AnnouncementGroup.objects.annotate(
+                    search=search_vector, rank=SearchRank(search_vector, search_query)
+                ).filter(search=search_query)
+            
+            page = self.paginate_queryset(queryset)
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
