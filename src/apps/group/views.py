@@ -34,9 +34,9 @@ class CreateGroupCategoryView(generics.CreateAPIView):
     serializer_class = GroupCategorySerializer
 
 class ListGroupCategoryView(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated]
     serializer_class = GroupCategorySerializer
     queryset = Category.objects.all()
+    pagination_class = None
 
 class CreateAnnouncementGroupView(generics.CreateAPIView):
     permission_classes = [CanCreateAnnouncementGroup]

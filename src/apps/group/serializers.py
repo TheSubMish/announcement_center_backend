@@ -87,17 +87,29 @@ class UpdateAnnouncementGroupSerializer(serializers.ModelSerializer):
         )
 
     def update(self, instance, validated_data):
-        if validated_data.get('name') != instance.name:
-            # If 'name' field is being updated, ensure uniqueness
-            if AnnouncementGroup.objects.exclude(id=instance.id).filter(name=validated_data['name']).exists():
-                logger.warning(f'Announcement group with name "{instance.name}" already exists')
-                raise serializers.ValidationError({'name': 'An AnnouncementGroup with this name already exists.'})
-            instance.name = validated_data['name']
+        try:
+            if validated_data.get('name') != instance.name:
+                # If 'name' field is being updated, ensure uniqueness
+                if AnnouncementGroup.objects.exclude(id=instance.id).filter(name=validated_data['name']).exists():
+                    logger.warning(f'Announcement group with name "{instance.name}" already exists')
+                    raise serializers.ValidationError({'name': 'An AnnouncementGroup with this name already exists.'})
+                instance.name = validated_data['name']
+        except KeyError:
+            pass
 
         instance.description = validated_data.get('description', instance.description)
         instance.image = validated_data.get('image', instance.image)
         instance.category = validated_data.get('category', instance.category)
+
         instance.group_type = validated_data.get('group_type', instance.group_type)
+        if validated_data.get('group_type') == GroupType.PRIVATE:
+            instance.invite_code = get_random_string(length=5)
+            instance.code_expires_at = timezone.now() + timezone.timedelta(days=7)
+        
+        if validated_data.get('group_type') == GroupType.PUBLIC:
+            instance.invite_code = None
+            instance.code_expires_at = None
+
         instance.location = validated_data.get('location', instance.location)
         instance.save()
         logger.info('Group updated successfully {instance.name}')
@@ -107,6 +119,8 @@ class UpdateAnnouncementGroupSerializer(serializers.ModelSerializer):
 class AnnouncementGroupSerializer(serializers.ModelSerializer):
     joined = serializers.SerializerMethodField()
     average_rating = serializers.SerializerMethodField()
+    category = serializers.StringRelatedField()
+    admin = serializers.StringRelatedField()
 
     class Meta:
         model = AnnouncementGroup
