@@ -10,41 +10,56 @@ class CreateAnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
         fields = (
-            'title',
-            'description', 
-            'image', 
             'group',
             'user',
+            'title',
+            'description', 
+            'image',
+            'image_description',
+            'location',
+            'link',
+            'contact_name',
+            'contact_email',
+            'announcement_visibility',
             'announcement_type',
-            'event_date',
-            'event_location',
+            'date',
         )
 
     def create(self, validated_data):
+        user = validated_data.get('user',None)
+        group = validated_data.get('group',None)
         title = validated_data.get('title',None)
         description = validated_data.get('description',None)
         image = validated_data.get('image',None)
+        image_description = validated_data.get('image_description',None)
+        location = validated_data.get('event_location',None)
+        link = validated_data.get('link',None)
+        contact_name = validated_data.get('contact_name',None)
+        contact_email = validated_data.get('contact_email',None)
+        announcement_visibility = validated_data.get('announcement_visibility',None)
         announcement_type = validated_data.get('announcement_type',None)
-        user = self.context['request'].user
-        group = validated_data.get('group',None)
-        event_date = validated_data.get('event_date',None)
-        event_location = validated_data.get('event_location',None)
+        date = validated_data.get('event_date',None)
 
         detector = SpamWordDetect(description)
         if detector.is_spam():
             description = detector.change_spam_word()
 
         announcement = Announcement.objects.create(
+            user=user,
+            group=group,
             title=title,
             description=description,
             image=image,
+            image_description=image_description,
+            location=location,
+            link=link,
+            contact_name=contact_name,
+            contact_email=contact_email,
+            announcement_visibility=announcement_visibility,
             announcement_type=announcement_type,
-            user=user,
-            group=group,
-            event_date=event_date,
-            event_location=event_location,
+            event_date=date
         )
-        logger.info(f'announcement created: {announcement.title} by user: {announcement.user}')
+        logger.info(f'announcement: {announcement.title} created by user: {announcement.user}')
         return announcement
     
 
