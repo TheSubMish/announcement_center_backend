@@ -6,23 +6,22 @@ class CanCreateAnnouncement(BasePermission):
 
     message = "You don't have permission to create announcement"
 
-    def has_object_permission(self, request, view, obj):
-        
+    def has_permission(self, request, view):
+        group_id = request.data.get('group')
+        user_id = request.user.id
+
+        if not group_id:
+            raise exceptions.APIException({'error': 'Group ID is required'})
+
         try:
-            group_member = GroupMember.objects.get(group=obj.group, user=obj.user)
-            if group_member.role==Role.ADMIN or group_member.role==Role.MODERATOR:
+            group_member = GroupMember.objects.get(group__group_id=group_id, user__id=user_id)
+            if group_member.role in [Role.ADMIN, Role.MODERATOR]:
                 return True
+            else:
+                self.message = "You need to be an admin or moderator to create an announcement"
+                return False
         except GroupMember.DoesNotExist:
             raise exceptions.APIException({'error': 'User not a member of this group'})
-        
-        return False
-
-    def has_permission(self, request, view):
-        return bool(
-            request.user and
-            request.user.is_authenticated and
-            request.user.has_perm('announcement.add_announcement')
-        )
     
 class CanUpdateAnnouncement(BasePermission):
 

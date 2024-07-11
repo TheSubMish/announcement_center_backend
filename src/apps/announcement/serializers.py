@@ -32,13 +32,13 @@ class CreateAnnouncementSerializer(serializers.ModelSerializer):
         description = validated_data.get('description',None)
         image = validated_data.get('image',None)
         image_description = validated_data.get('image_description',None)
-        location = validated_data.get('event_location',None)
+        location = validated_data.get('location',None)
         link = validated_data.get('link',None)
         contact_name = validated_data.get('contact_name',None)
         contact_email = validated_data.get('contact_email',None)
         announcement_visibility = validated_data.get('announcement_visibility',None)
         announcement_type = validated_data.get('announcement_type',None)
-        date = validated_data.get('event_date',None)
+        date = validated_data.get('date',None)
 
         detector = SpamWordDetect(description)
         if detector.is_spam():
@@ -57,7 +57,7 @@ class CreateAnnouncementSerializer(serializers.ModelSerializer):
             contact_email=contact_email,
             announcement_visibility=announcement_visibility,
             announcement_type=announcement_type,
-            event_date=date
+            date=date
         )
         logger.info(f'announcement: {announcement.title} created by user: {announcement.user}')
         return announcement
