@@ -1,12 +1,20 @@
 from rest_framework.permissions import BasePermission
+from rest_framework import exceptions
+from src.apps.group.models import GroupMember,Role
 
 class CanCreateAnnouncement(BasePermission):
 
     message = "You don't have permission to create announcement"
 
     def has_object_permission(self, request, view, obj):
-        if obj.group.admin_id == request.user.id:
-            return True
+        
+        try:
+            group_member = GroupMember.objects.get(group=obj.group, user=obj.user)
+            if group_member.role==Role.ADMIN or group_member.role==Role.MODERATOR:
+                return True
+        except GroupMember.DoesNotExist:
+            raise exceptions.APIException({'error': 'User not a member of this group'})
+        
         return False
 
     def has_permission(self, request, view):
@@ -21,8 +29,14 @@ class CanUpdateAnnouncement(BasePermission):
     message = "You don't have permission to update announcement"
 
     def has_object_permission(self, request, view, obj):
-        if obj.admin == request.user:
-            return True
+        
+        try:
+            group_member = GroupMember.objects.get(group=obj.group, user=obj.user)
+            if group_member.role==Role.ADMIN or group_member.role==Role.MODERATOR:
+                return True
+        except GroupMember.DoesNotExist:
+            raise exceptions.APIException({'error': 'User not a member of this group'})
+        
         return False
 
     def has_permission(self, request, view):
@@ -48,8 +62,14 @@ class CanDeleteAnnouncement(BasePermission):
     message = "You don't have permission to delete announcement"
 
     def has_object_permission(self, request, view, obj):
-        if obj.admin == request.user:
-            return True
+        
+        try:
+            group_member = GroupMember.objects.get(group=obj.group, user=obj.user)
+            if group_member.role==Role.ADMIN or group_member.role==Role.MODERATOR:
+                return True
+        except GroupMember.DoesNotExist:
+            raise exceptions.APIException({'error': 'User not a member of this group'})
+        
         return False
     
     def has_permission(self, request, view):
