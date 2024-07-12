@@ -39,6 +39,14 @@ class UpdateAnnouncementView(generics.UpdateAPIView):
     permission_classes = [CanUpdateAnnouncement]
     queryset = Announcement.objects.all()
 
+    def check_object_permissions(self, request, obj):
+        # Call the parent method to handle standard permissions
+        super().check_object_permissions(request, obj)
+
+        # Your custom permission logic here
+        if not self.permission_classes[0].has_object_permission(request, self, obj):
+            raise exceptions.PermissionDenied(self.permission_classes[0].message)
+
     def get_object(self):
         id = self.kwargs.get('pk', None)
         try:

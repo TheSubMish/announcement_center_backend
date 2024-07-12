@@ -15,7 +15,7 @@ from .views import (
 
 urlpatterns = [
     path('create/', CreateAnnouncementView.as_view(), name='create-announcement-api'),
-    # path('update/<uuid:pk>/', UpdateAnnouncementView.as_view(), name='update-announcement-api'),
+    path('update/<uuid:pk>/', UpdateAnnouncementView.as_view(), name='update-announcement-api'),
     # path('list/group/<uuid:pk>/', ListAnnouncementsView.as_view(), name='list-announcements-api'),
     # path('retrieve/<uuid:pk>/', RetrieveAnnouncementView.as_view(), name='retrieve-announcement-api'),
     # path('delete/<uuid:pk>/', DeleteAnnouncementView.as_view(), name='delete-announcement-api'),

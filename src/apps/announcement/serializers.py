@@ -71,21 +71,30 @@ class UpdateAnnouncementSerializer(serializers.ModelSerializer):
             'title',
             'description', 
             'image',
+            'image_description',
+            'location',
+            'link',
+            'contact_name',
+            'contact_email',
+            'announcement_visibility',
             'announcement_type',
-            'event_date',
-            'event_location',
+            'date',
         )
 
     def update(self, instance, validated_data):
         instance.title = validated_data.get('title',instance.title)
         instance.description = validated_data.get('description',instance.description)
         instance.image = validated_data.get('image',instance.image)
+        instance.image_description = validated_data.get('image_description',instance.image_description)
+        instance.location = validated_data.get('location',instance.location)
+        instance.link = validated_data.get('link',instance.link)
+        instance.contact_name = validated_data.get('contact_name',instance.contact_name)
+        instance.contact_email = validated_data.get('contact_email',instance.contact_email)
+        instance.announcement_visibility = validated_data.get('announcement_visibility',instance.announcement_visibility)
         instance.announcement_type = validated_data.get('announcement_type',instance.announcement_type)
-        instance.event_date = validated_data.get('event_date',instance.event_date)
-        instance.event_location = validated_data.get('event_location',instance.event_location)
+        instance.date = validated_data.get('date',instance.date)
         instance.save()
-        logger.info(f'announcement updated: {instance.title} by user: {instance.user}')
-        print(logger)
+        logger.info(f'announcement updated: {instance.title} by user: {self.context["request"].user}')
         return instance
     
 class AnnouncementSerializer(serializers.ModelSerializer):
