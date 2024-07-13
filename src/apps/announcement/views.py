@@ -39,20 +39,13 @@ class UpdateAnnouncementView(generics.UpdateAPIView):
     permission_classes = [CanUpdateAnnouncement]
     queryset = Announcement.objects.all()
 
-    def check_object_permissions(self, request, obj):
-        # Call the parent method to handle standard permissions
-        super().check_object_permissions(request, obj)
-
-        # Your custom permission logic here
-        if not self.permission_classes[0].has_object_permission(request, self, obj):
-            raise exceptions.PermissionDenied(self.permission_classes[0].message)
-
     def get_object(self):
         id = self.kwargs.get('pk', None)
         try:
             announcement = Announcement.objects.select_related("user","group").get(id=id)
         except Announcement.DoesNotExist:
-            raise exceptions.APIException({'error': 'Announcement does not exist'})
+            raise exceptions.NotFound({'error': 'Announcement does not exist'})
+        self.check_object_permissions(self.request, announcement)
         return announcement
     
 
@@ -97,6 +90,7 @@ class DeleteAnnouncementView(generics.DestroyAPIView):
             announcement = Announcement.objects.get(id=id)
         except Announcement.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement does not exist'})
+        self.check_object_permissions(self.request, announcement)
         logger.info(f'Announcement: {announcement.title} deleting by user: {self.request.user.username}')
         return announcement
     

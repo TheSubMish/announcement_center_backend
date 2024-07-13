@@ -1,5 +1,5 @@
 from rest_framework.permissions import BasePermission
-from rest_framework import exceptions
+from rest_framework.exceptions import PermissionDenied
 from src.apps.group.models import GroupMember,Role
 
 class CanCreateAnnouncement(BasePermission):
@@ -14,20 +14,16 @@ class CanCreateAnnouncement(BasePermission):
             return False
 
         group_id = request.data.get('group')
-        user_id = request.user.id
 
         if not group_id:
-            raise exceptions.APIException({'error': 'Group ID is required'})
+            raise PermissionDenied({'error': 'Group ID is required'})
 
         try:
-            group_member = GroupMember.objects.get(group__group_id=group_id, user__id=user_id)
-            if group_member.role in [Role.ADMIN, Role.MODERATOR]:
-                return True
-            else:
-                self.message = "You need to be an admin or moderator to create an announcement"
+            group_member = GroupMember.objects.get(group__group_id=group_id, user=request.user)
+            if group_member.role==Role.MEMBER:
                 return False
         except GroupMember.DoesNotExist:
-            raise exceptions.APIException({'error': 'User not a member of this group'})
+            raise PermissionDenied({'error': 'User is not a member of this group'})
     
 class CanUpdateAnnouncement(BasePermission):
 
@@ -36,13 +32,13 @@ class CanUpdateAnnouncement(BasePermission):
     def has_object_permission(self, request, view, obj):
         print("has_object_permission called")
         try:
-            group_member = GroupMember.objects.get(group=obj.group, user=obj.user)
-            if group_member.role==Role.ADMIN or group_member.role==Role.MODERATOR:
-                return True
+            group_member = GroupMember.objects.get(group=obj.group, user=request.user)
+            if group_member.role==Role.MEMBER:
+                return False
         except GroupMember.DoesNotExist:
-            raise exceptions.APIException({'error': 'User not a member of this group'})
+            raise PermissionDenied({'error': 'User is not a member of this group'})
         
-        return False
+        return True
 
     def has_permission(self, request, view):
         return bool(
@@ -67,15 +63,15 @@ class CanDeleteAnnouncement(BasePermission):
     message = "You don't have permission to delete announcement"
 
     def has_object_permission(self, request, view, obj):
-        
+        print("has_object_permission called")
         try:
-            group_member = GroupMember.objects.get(group=obj.group, user=obj.user)
-            if group_member.role==Role.ADMIN or group_member.role==Role.MODERATOR:
-                return True
+            group_member = GroupMember.objects.get(group=obj.group, user=request.user)
+            if group_member.role==Role.MEMBER:
+                return False
         except GroupMember.DoesNotExist:
-            raise exceptions.APIException({'error': 'User not a member of this group'})
+            raise PermissionDenied({'error': 'User is not a member of this group'})
         
-        return False
+        return True
     
     def has_permission(self, request, view):
         return bool(
