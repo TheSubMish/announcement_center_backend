@@ -19,6 +19,7 @@ from .permissions import (
 from rest_framework.permissions import IsAuthenticated
 from .models import Announcement,AnnouncementComment
 from src.apps.group.models import AnnouncementGroup
+from src.apps.common.models import Status
 from drf_spectacular.utils import extend_schema
 import logging
 
@@ -155,7 +156,7 @@ class RetrieveAnnouncementCommentsView(generics.RetrieveAPIView):
     def get_object(self):
         id = self.kwargs.get('pk', None)
         try:
-            announcement_comment = AnnouncementComment.objects.get(id=id)
+            announcement_comment = AnnouncementComment.objects.get(id=id,status=Status.ACTIVE)
         except AnnouncementComment.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement comment does not exist'})
         return announcement_comment
@@ -183,7 +184,7 @@ class RetrieveAnnouncementCommentsView(generics.RetrieveAPIView):
         return Response(serializer.data,status=status.HTTP_200_OK)
 
 class UpdateAnnouncementCommentView(generics.UpdateAPIView):
-    permission_classes = [IsAuthenticated,CanUpdateComment]
+    permission_classes = [CanUpdateComment]
     serializer_class = UpdateAnnouncementCommentSerializer
     queryset = AnnouncementComment.objects.all()
 
@@ -193,11 +194,12 @@ class UpdateAnnouncementCommentView(generics.UpdateAPIView):
             announcement_comment = AnnouncementComment.objects.get(id=id)
         except AnnouncementComment.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement comment does not exist'})
+        self.check_object_permissions(self.request, announcement_comment)
         return announcement_comment
     
 
 class DeleteAnnouncementCommentView(generics.DestroyAPIView):
-    permission_classes = [IsAuthenticated,CanDeleteComment]
+    permission_classes = [CanDeleteComment]
     serializer_class = AnnouncementCommentSerializer
     queryset = AnnouncementComment.objects.all()
 
@@ -207,5 +209,6 @@ class DeleteAnnouncementCommentView(generics.DestroyAPIView):
             announcement_comment = AnnouncementComment.objects.get(id=id)
         except AnnouncementComment.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement comment does not exist'})
+        self.check_object_permissions(self.request, announcement_comment)
         logger.info(f'Anouncement comment {announcement_comment} deleting by user {self.request.user.username}')
         return announcement_comment

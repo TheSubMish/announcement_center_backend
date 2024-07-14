@@ -107,6 +107,8 @@ class AnnouncementSerializer(serializers.ModelSerializer):
 
 class CreateAnnouncementCommentSerializer(serializers.ModelSerializer):
 
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
     class Meta:
         model = AnnouncementComment
         fields = '__all__'
@@ -150,6 +152,8 @@ class UpdateAnnouncementCommentSerializer(serializers.ModelSerializer):
         return instance
     
 class AnnouncementCommentSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()
+    announcement = serializers.StringRelatedField()
     level = serializers.SerializerMethodField()
     replies = serializers.SerializerMethodField()
     class Meta:

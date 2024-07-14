@@ -87,10 +87,12 @@ class CanUpdateComment(BasePermission):
         return False
     
     def has_permission(self, request, view):
+        print(f"User: {request.user}, Authenticated: {request.user.is_authenticated}")
+        print(f"Has change_announcement_comment permission: {request.user.has_perm('announcement_comment.change_announcement_comment')}")
         return bool(
             request.user and
             request.user.is_authenticated and
-            request.user.has_perm('announcement.update_announcement_comment')
+            request.user.has_perm('announcement.change_announcementcomment')
         )
     
 class CanDeleteComment(BasePermission):
@@ -104,5 +106,5 @@ class CanDeleteComment(BasePermission):
         return bool(
             request.user and
             request.user.is_authenticated and
-            request.user.has_perm('announcement.delete_announcement_comment')
+            request.user.has_perm('announcement.delete_announcementcomment')
         )
