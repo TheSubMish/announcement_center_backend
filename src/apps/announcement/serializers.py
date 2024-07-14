@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Announcement,AnnouncementComment
 from src.apps.common.utills import SpamWordDetect
+from src.apps.common.models import Status
 import logging
 
 logger = logging.getLogger('info_logger')
@@ -109,6 +110,12 @@ class CreateAnnouncementCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnnouncementComment
         fields = '__all__'
+
+    def validate(self, attrs):
+        announcement = attrs.get('announcement',None)
+        if announcement.status == Status.INACTIVE:
+            raise serializers.ValidationError({'error': 'Announcement is inactive'})
+        return super().validate(attrs)
     
     def create(self, validated_data):
         announcement = validated_data.get('announcement',None)

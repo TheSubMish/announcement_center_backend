@@ -30,7 +30,6 @@ class CanUpdateAnnouncement(BasePermission):
     message = "You don't have permission to update announcement"
 
     def has_object_permission(self, request, view, obj):
-        print("has_object_permission called")
         try:
             group_member = GroupMember.objects.get(group=obj.group, user=request.user)
             if group_member.role==Role.MEMBER:
@@ -63,15 +62,14 @@ class CanDeleteAnnouncement(BasePermission):
     message = "You don't have permission to delete announcement"
 
     def has_object_permission(self, request, view, obj):
-        print("has_object_permission called")
         try:
             group_member = GroupMember.objects.get(group=obj.group, user=request.user)
-            if group_member.role==Role.MEMBER:
-                return False
+            if group_member.role==Role.ADMIN:
+                return True
         except GroupMember.DoesNotExist:
             raise PermissionDenied({'error': 'User is not a member of this group'})
         
-        return True
+        return False
     
     def has_permission(self, request, view):
         return bool(
