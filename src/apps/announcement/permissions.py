@@ -22,6 +22,8 @@ class CanCreateAnnouncement(BasePermission):
             group_member = GroupMember.objects.get(group__group_id=group_id, user=request.user)
             if group_member.role==Role.MEMBER:
                 return False
+            else:
+                return True
         except GroupMember.DoesNotExist:
             raise PermissionDenied({'error': 'User is not a member of this group'})
     
