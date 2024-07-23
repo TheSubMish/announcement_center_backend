@@ -149,6 +149,13 @@ class ListAnnouncementGroupView(generics.ListAPIView):
                 required=False,
                 type=str,
             ),
+            OpenApiParameter(
+                name="category",
+                location=OpenApiParameter.QUERY,
+                description="group category",
+                required=False,
+                type=str,
+            ),
         ]
     )
     def get(self, request, *args, **kwargs):

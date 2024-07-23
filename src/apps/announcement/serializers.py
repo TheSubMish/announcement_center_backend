@@ -152,7 +152,6 @@ class UpdateAnnouncementCommentSerializer(serializers.ModelSerializer):
         return instance
     
 class AnnouncementCommentSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField()
     announcement = serializers.StringRelatedField()
     level = serializers.SerializerMethodField()
     replies = serializers.SerializerMethodField()
