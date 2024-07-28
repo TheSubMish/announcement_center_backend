@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from .serializers import NotificationSerializer
 from django.conf import settings
 from .mongodb import database
+from pymongo import DESCENDING
 
 import logging
 logger = logging.getLogger('error_logger')
@@ -21,7 +22,7 @@ class ListNotificationView(generics.ListAPIView):
             logger.error(f"Failed to connect to MongoDB: {e}")
             raise exceptions.APIException("Something went wrong")
         
-        notifications = db.notification.find({"receiver": user.id})
+        notifications = db.notification.find({"receiver": user.id}).sort("created_at", DESCENDING)
 
         serializer = NotificationSerializer(notifications, many=True)
         return Response(serializer.data,status=status.HTTP_200_OK)
