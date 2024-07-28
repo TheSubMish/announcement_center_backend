@@ -29,7 +29,7 @@ def notification(sender,instance,created,**kwargs):
                         "_id": Binary.from_uuid(uuid.uuid4(), UuidRepresentation.STANDARD),
                         "sender": instance.user.id,
                         "receiver": group_member.user.id,
-                        "message": f"{instance.user.username} created a announcement",
+                        "message": f"{instance.user.username} created a announcement : {instance.id}'",
                         "read": False,
                         "created_at": datetime.datetime.now(),
                     }
@@ -47,7 +47,7 @@ def notification(sender,instance,created,**kwargs):
                     "_id": Binary.from_uuid(uuid.uuid4(), UuidRepresentation.STANDARD),
                     "sender": instance.user.id,
                     "receiver": instance.announcement.user.id,
-                    "message": f"{instance.user.username} commented on your announcement",
+                    "message": f"{instance.user.username} commented on your announcement : {instance.announcement}",
                     "read": False,
                     "created_at": datetime.datetime.now(),
                 }

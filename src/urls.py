@@ -24,6 +24,7 @@ urlpatterns = [
             path('user/',include('src.apps.auth.urls')),
             path('group/',include('src.apps.group.urls')),
             path('announcement/',include('src.apps.announcement.urls')),
+            path('notification/',include('src.apps.notification.urls')),
             # path('payment/',include('src.apps.payment.urls')),
         ]))
     ]))
