@@ -143,7 +143,7 @@ class UserLogoutView(generics.GenericAPIView):
         try:
             token.blacklist()
             user = request.user
-            user.is_active = False
+            user.status = False
             user.save()
             logger.info(f'{user.username} logged out successfully')
             return Response({'msg':'User logged out successful'},status=status.HTTP_200_OK)
