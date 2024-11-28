@@ -155,6 +155,7 @@ class AnnouncementCommentSerializer(serializers.ModelSerializer):
     announcement = serializers.StringRelatedField()
     level = serializers.SerializerMethodField()
     replies = serializers.SerializerMethodField()
+
     class Meta:
         model = AnnouncementComment
         fields = '__all__'
