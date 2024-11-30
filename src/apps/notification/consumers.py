@@ -3,9 +3,35 @@ from asgiref.sync import async_to_sync
 
 from src.apps.auth.models import User
 from django.contrib.auth.models import AnonymousUser
+from channels.layers import get_channel_layer
 from src.apps.notification.models import Notification
 
 import json
+import uuid
+
+def convert_uuids_to_str(data):
+    if isinstance(data, dict):
+        return {k: convert_uuids_to_str(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [convert_uuids_to_str(item) for item in data]
+    elif isinstance(data, uuid.UUID):
+        return str(data)
+    else:
+        return data
+
+def send_notification(payload):
+    if payload:
+
+        payload = convert_uuids_to_str(payload)
+
+        channel_layer = get_channel_layer()
+        for group_name in (
+            payload.get("group_names", []) if isinstance(payload, dict) else []
+        ):
+            async_to_sync(channel_layer.group_send)(  # type: ignore
+                group_name, payload
+            )
+
 
 class NotificationConsumer(WebsocketConsumer):
     def connect(self):
@@ -45,11 +71,13 @@ class NotificationConsumer(WebsocketConsumer):
 
             data = json.loads(text_data)
             if data.get("action") == "seen":
-                _db = self.user._state.db
+
                 try:
                     notification: Notification = Notification.objects.get(
                         id=data.get("notification_id")
                     )
+                    notification.read = True
+                    notification.save()
                 except Notification.DoesNotExist:
                     return
 

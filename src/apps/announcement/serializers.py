@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Announcement,AnnouncementComment
 from src.apps.common.utills import SpamWordDetect
 from src.apps.common.models import Status
+from .tasks import announcement_creation_notification
 import logging
 
 logger = logging.getLogger('info_logger')
@@ -60,6 +61,7 @@ class CreateAnnouncementSerializer(serializers.ModelSerializer):
             announcement_type=announcement_type,
             date=date
         )
+        announcement_creation_notification.delay(str(announcement.id))
         logger.info(f'announcement: {announcement.title} created by user: {announcement.user}')
         return announcement
     
