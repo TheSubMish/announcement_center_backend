@@ -14,3 +14,14 @@
 <h3>Run celery</h3>
 <p>To send emails<p>
 <p>celery -A src worker --loglevel=info<p>
+
+<h3>Run using docker</h3>
+<pre>
+<b>docker compose build</b>
+
+<b>docker compose exec web python manage.py migrate</b>
+
+<b>docker compose up</b>
+
+<b> docker compose down</b> to stop the container
+</pre>
