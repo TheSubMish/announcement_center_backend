@@ -7,6 +7,7 @@ from .serializers import (
     CreateAnnouncementCommentSerializer,
     UpdateAnnouncementCommentSerializer,
     AnnouncementCommentSerializer,
+    AnnouncementLikeSerializer,
 )
 from .permissions import (
     CanCreateAnnouncement,
@@ -17,7 +18,7 @@ from .permissions import (
     CanDeleteComment,
 )
 from rest_framework.permissions import IsAuthenticated
-from .models import Announcement,AnnouncementComment
+from .models import Announcement,AnnouncementComment,AnnouncementLike
 from src.apps.group.models import AnnouncementGroup
 from src.apps.common.models import Status
 from drf_spectacular.utils import extend_schema
@@ -92,7 +93,6 @@ class DeleteAnnouncementView(generics.DestroyAPIView):
         except Announcement.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement does not exist'})
         self.check_object_permissions(self.request, announcement)
-        logger.info(f'Announcement: {announcement.title} deleting by user: {self.request.user.username}')
         return announcement
     
 class CreateAnnouncementCommentView(generics.CreateAPIView):
@@ -210,5 +210,29 @@ class DeleteAnnouncementCommentView(generics.DestroyAPIView):
         except AnnouncementComment.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement comment does not exist'})
         self.check_object_permissions(self.request, announcement_comment)
-        logger.info(f'Anouncement comment {announcement_comment} deleting by user {self.request.user.username}')
         return announcement_comment
+    
+
+class AnnouncementLikeView(generics.GenericAPIView):
+    serializer_class = AnnouncementLikeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            announcement = Announcement.objects.get(id=announcement_id)
+        except Announcement.DoesNotExist:
+            return Response({'error': 'Announcement does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+        user = request.user
+        user_like = AnnouncementLike.objects.update_or_create(
+            user=user, 
+            announcement=announcement,
+            defaults={
+                'like': serializer.validated_data.get("like",False),
+                'dislike': serializer.validated_data.get("dislike",False)
+            }
+        )
+
+        return Response({"msg":"Updated successfully"})

@@ -10,6 +10,7 @@ from .views import (
     ListAnnouncementCommentsView,
     RetrieveAnnouncementCommentsView,
     DeleteAnnouncementCommentView,
+    AnnouncementLikeView,
 )
 
 
@@ -24,4 +25,5 @@ urlpatterns = [
     path('<uuid:pk>/comment/list/', ListAnnouncementCommentsView.as_view(), name='list-announcement-comments-api'),
     path('comment/retrieve/<uuid:pk>/', RetrieveAnnouncementCommentsView.as_view(), name='retrieve-announcement-comments-api'),
     path('comment/delete/<uuid:pk>/', DeleteAnnouncementCommentView.as_view(), name='delete-announcement-comment-api'),
+    path('like/', AnnouncementLikeView.as_view(), name='like-announcement-api'),
 ]

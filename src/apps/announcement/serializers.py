@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Announcement,AnnouncementComment
+from .models import Announcement,AnnouncementComment,AnnouncementLike
 from src.apps.common.utills import SpamWordDetect
 from src.apps.common.models import Status
 from .tasks import announcement_creation_notification
@@ -101,11 +101,22 @@ class UpdateAnnouncementSerializer(serializers.ModelSerializer):
         return instance
     
 class AnnouncementSerializer(serializers.ModelSerializer):
+    total_comments = serializers.SerializerMethodField()
+    likes = serializers.SerializerMethodField()
+    dislikes = serializers.SerializerMethodField()
 
     class Meta:
         model = Announcement
         fields = '__all__'
 
+    def get_total_comments(self, obj):
+        return obj.comments.count()
+    
+    def get_likes(self, obj):
+        return AnnouncementLike.objects.filter(announcement=obj, like=True).count()
+
+    def get_dislikes(self, obj):
+        return AnnouncementLike.objects.filter(announcement=obj, dislike=True).count()
 
 class CreateAnnouncementCommentSerializer(serializers.ModelSerializer):
 
@@ -169,3 +180,10 @@ class AnnouncementCommentSerializer(serializers.ModelSerializer):
     def get_replies(self, obj):
         replies = obj.replies.order_by('-created_at')  # Order replies by creation time in descending order
         return AnnouncementCommentSerializer(replies, many=True).data
+    
+
+class AnnouncementLikeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = AnnouncementLike
+        fields = '__all__'

@@ -86,7 +86,7 @@ class AnnouncementLike(BaseModel):
     announcement = models.ForeignKey(Announcement, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     like = models.BooleanField(default=False)
-    unlike = models.BooleanField(default=False)
+    dislike = models.BooleanField(default=False)
 
     def delete(self, *args, **kwargs):
         self.status = Status.INACTIVE

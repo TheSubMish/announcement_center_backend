@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Announcement,AnnouncementComment
+from .models import Announcement,AnnouncementComment, AnnouncementLike
 # Register your models here.
 @admin.register(Announcement)
 class AnnouncementAdmin(admin.ModelAdmin):
@@ -10,5 +10,11 @@ class AnnouncementAdmin(admin.ModelAdmin):
 @admin.register(AnnouncementComment)
 class AnnouncementCommentAdmin(admin.ModelAdmin):
     list_display = ['id','announcement','user','status','created_at']
+    ordering = ('-created_at',)
+    search_fields = ['announcement','user']
+
+@admin.register(AnnouncementLike)
+class AnnouncementLikeAdmin(admin.ModelAdmin):
+    list_display = ['id','announcement','user','like','dislike','status','created_at']
     ordering = ('-created_at',)
     search_fields = ['announcement','user']
