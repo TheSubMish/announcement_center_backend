@@ -1,4 +1,9 @@
-# from rest_framework import serializers,exceptions
+from rest_framework import serializers,exceptions
+
+class PaymentRequestSerializer(serializers.Serializer):
+    group_id = serializers.UUIDField()
+
+
 # import json
 # from src.apps.announcement.models import Announcement
 # from src.apps.auth.models import User
