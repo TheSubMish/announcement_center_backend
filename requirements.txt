@@ -8,6 +8,7 @@ celery==5.3.6
 certifi==2024.8.30
 cffi==1.17.1
 channels==4.2.0
+channels_redis==4.2.1
 charset-normalizer==3.3.2
 click==8.1.7
 click-didyoumean==0.3.1
@@ -38,6 +39,7 @@ jsonschema==4.23.0
 jsonschema-specifications==2023.12.1
 kombu==5.4.0
 marshmallow==3.22.0
+msgpack==1.1.0
 packaging==24.1
 pillow==10.3.0
 prompt_toolkit==3.0.47
@@ -60,6 +62,7 @@ service-identity==24.2.0
 setuptools==75.6.0
 six==1.16.0
 sqlparse==0.5.1
+stripe==11.3.0
 Twisted==24.10.0
 txaio==23.1.1
 typing_extensions==4.12.2

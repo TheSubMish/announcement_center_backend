@@ -13,10 +13,20 @@ logger = logging.getLogger('error_logger')
 
 from django.db import models
 
+class NotificationType(models.TextChoices):
+    GROUP_JOIN = 'group_join','Group Join'
+    GROUP_LEAVE = 'group_leave','Group Leave'
+    ANNOCUNCEMENT_CREATE = 'announcement_create','Announcement Create'
+    ANNOUNCEMENT_UPDATE = 'announcement_update','Announcement Update'
+    ANNOUNCEMENT_COMMENT_CREATE = 'announcement_comment_create','Announcement Comment Create'
+    ANNOUNCEMENT_LIKE = 'announcement_like','Announcement Like'
+    ANNOUNCEMENT_UNLIKE = 'announcement_unlike','Announcement Unlike'
+
 class Notification(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4(), editable=False)
     sender = models.ForeignKey(User,on_delete=models.SET_NULL, null=True, blank=True, related_name="sender")
     receiver = models.ForeignKey(User,on_delete=models.SET_NULL, null=True, blank=True, related_name="receiver")
+    type = models.CharField(max_length=100, choices=NotificationType.choices,default=NotificationType.GROUP_JOIN)
     message = models.CharField(max_length=255)
     read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
