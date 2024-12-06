@@ -80,3 +80,17 @@ class AnnouncementComment(BaseModel):
     def delete(self, *args, **kwargs):
         self.status = Status.INACTIVE
         self.save()
+
+
+class AnnouncementLike(BaseModel):
+    announcement = models.ForeignKey(Announcement, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    like = models.BooleanField(default=False)
+    unlike = models.BooleanField(default=False)
+
+    def delete(self, *args, **kwargs):
+        self.status = Status.INACTIVE
+        self.save()
+
+    def __str__(self):
+        return f"{self.user.email if self.user else 'Anonymous'} - Like: {self.like}"
