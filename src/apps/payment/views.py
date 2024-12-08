@@ -1,4 +1,4 @@
-from rest_framework import generics,status
+from rest_framework import generics,status,permissions
 from rest_framework.response import Response
 from .serializers import PaymentRequestSerializer
 from django.conf import settings
@@ -8,12 +8,10 @@ import stripe
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 class PaymentRequestView(generics.GenericAPIView):
-
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = PaymentRequestSerializer
 
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
 
         intent = stripe.PaymentIntent.create(
             amount=459,
@@ -23,7 +21,14 @@ class PaymentRequestView(generics.GenericAPIView):
                 'enabled': True,
             },
         )
-        
+
+        data = request.data.copy()  # Create a mutable copy of request.data
+        data['user'] = request.user.id
+        data['payment_intent'] = intent['id']
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
         return Response(
             {
                 'clientSecret': intent['client_secret'],

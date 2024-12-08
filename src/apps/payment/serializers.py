@@ -1,7 +1,11 @@
 from rest_framework import serializers,exceptions
+from .models import GroupPayment
 
-class PaymentRequestSerializer(serializers.Serializer):
-    group_id = serializers.UUIDField()
+class PaymentRequestSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = GroupPayment
+        fields = "__all__"
 
 
 # import json
