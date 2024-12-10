@@ -1,15 +1,19 @@
 from rest_framework import generics,status,permissions
 from rest_framework.response import Response
-from .serializers import PaymentRequestSerializer
+from .serializers import PaymentRequestSerializer, GroupPaymentAcceptSerializer
 from django.conf import settings
+from decimal import Decimal
+from datetime import datetime, timedelta
 
+from src.apps.payment.models import GroupPayment, PaymentStatus
+from src.apps.group.models import AnnouncementGroup
 
 import stripe
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 class PaymentRequestView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = PaymentRequestSerializer
+    # serializer_class = PaymentRequestSerializer
 
     def post(self, request, *args, **kwargs):
 
@@ -22,12 +26,22 @@ class PaymentRequestView(generics.GenericAPIView):
             },
         )
 
-        data = request.data.copy()  # Create a mutable copy of request.data
-        data['user'] = request.user.id
-        data['payment_intent'] = intent['id']
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        # data = request.data.copy()  # Create a mutable copy of request.data
+        # data['payment_intent'] = intent['id']
+        # serializer = self.get_serializer(data=data)
+        # serializer.is_valid(raise_exception=True)
+        # serializer.save()
+
+        try:
+            group = AnnouncementGroup.objects.get(group_id=request.data.get('group',None))
+        except AnnouncementGroup.DoesNotExist:
+            return Response({'error': 'Group does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        
+        payment = GroupPayment.objects.create(
+            group=group,
+            user=request.user,
+            payment_intent=intent['id'],
+        )
 
         return Response(
             {
@@ -38,6 +52,32 @@ class PaymentRequestView(generics.GenericAPIView):
             status=status.HTTP_200_OK
         )
 
+
+class GroupPaymentAcceptView(generics.GenericAPIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+    # serializer_class = GroupPaymentAcceptSerializer
+
+    def post(self, request, *args, **kwargs):
+        payment_intent_id = request.data.get('payment_intent')
+
+        try:
+            payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+        except stripe.error.InvalidRequestError as e: # type: ignore
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if payment_intent.status == 'succeeded':
+            try:
+                payment = GroupPayment.objects.get(payment_intent=payment_intent_id)
+                payment.payment_status = PaymentStatus.SUCCESS
+                payment.amount = Decimal(payment_intent.amount/100)
+                payment.currency = payment_intent.currency
+                payment.recurring_date = datetime.now() + timedelta(days=365)
+                payment.save()
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'status': payment_intent.status}, status=status.HTTP_200_OK)
 
 # class InitiatePaymentView(generics.GenericAPIView):
 #     serializer_class = InitiatePaymentSerializer

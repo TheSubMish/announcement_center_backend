@@ -2,11 +2,18 @@ from rest_framework import serializers,exceptions
 from .models import GroupPayment
 
 class PaymentRequestSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     
     class Meta:
         model = GroupPayment
-        fields = "__all__"
+        fields = ("group",)
 
+
+class GroupPaymentAcceptSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = GroupPayment
+        fields = ("payment_intent",)
 
 # import json
 # from src.apps.announcement.models import Announcement

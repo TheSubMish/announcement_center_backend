@@ -19,7 +19,7 @@ class GroupPayment(BaseModel):
     payment_intent = models.CharField(max_length=255, null=True, blank=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     currency = models.CharField(max_length=3, null=True, blank=True)
-    recurring_date = models.DateField(null=True, blank=True)
+    recurring_date = models.DateTimeField(null=True, blank=True)
     payment_status = models.CharField(
         max_length=255, 
         null=True, blank=True, 
