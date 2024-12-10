@@ -42,6 +42,8 @@ class AnnouncementGroup(Group):
     invite_code = models.CharField(max_length=255,null=True,blank=True)
     code_expires_at = models.DateTimeField(null=True, blank=True)
 
+    click_through = models.IntegerField(default=0)
+
     premium_group = models.BooleanField(default=False)
 
     status = models.CharField(

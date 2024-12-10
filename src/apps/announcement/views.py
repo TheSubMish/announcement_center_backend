@@ -63,7 +63,7 @@ class ListAnnouncementsView(generics.ListAPIView):
         except AnnouncementGroup.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement group does not exist'})
         
-        announcements = Announcement.objects.select_related("user","group").filter(group=announcement_group).order_by('-created_at')
+        announcements = Announcement.objects.select_related("user","group").filter(group=announcement_group,status="active").order_by('-created_at')
         return announcements
     
 

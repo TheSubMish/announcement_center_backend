@@ -110,7 +110,7 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_total_comments(self, obj):
-        return obj.comments.count()
+        return AnnouncementComment.objects.filter(announcement=obj,status="active").count()
     
     def get_likes(self, obj):
         return AnnouncementLike.objects.filter(announcement=obj, like=True).count()
