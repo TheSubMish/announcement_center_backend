@@ -1,13 +1,13 @@
 from celery import shared_task
 
 from src.apps.announcement.models import Announcement
-from src.apps.notification.models import Notification
+from src.apps.notification.models import Notification, NotificationType
 from src.apps.notification.serializers import NotificationSerializer
 from src.apps.notification.consumers import send_notification
 from src.apps.auth.models import User
 
 @shared_task
-def announcement_creation_notification(annoucement_id):
+def announcement_creation_notification(annoucement_id, type: str):
 
     try:
 
@@ -17,10 +17,24 @@ def announcement_creation_notification(annoucement_id):
             for user in User.objects.filter(groupmember__group=announcement.group).exclude(pk=announcement.user.pk)
         ]
 
+        if type == "create":
+            notification_type = NotificationType.ANNOCUNCEMENT_CREATE
+        elif type == "update":
+            notification_type = NotificationType.ANNOUNCEMENT_UPDATE
+        elif type == "comment":
+            notification_type = NotificationType.ANNOUNCEMENT_COMMENT_CREATE
+        elif type == "like":
+            notification_type = NotificationType.ANNOUNCEMENT_LIKE
+        elif type == "unlike":
+            notification_type = NotificationType.ANNOUNCEMENT_UNLIKE
+        else:
+            return "Invalid type"
+
         for recipient in recipients:
             notification =  Notification.objects.create(
                 sender=announcement.user,
                 receiver=recipient,
+                type=notification_type,
                 message=f"{announcement.id}",
                 read=False,
             )
@@ -36,18 +50,6 @@ def announcement_creation_notification(annoucement_id):
             send_notification(
                 payload=payload
             )
-
-
-        # subject = f"New announcement created: {announcement.title}"
-        # message = f"User {announcement.user.username} has created a new announcement: {announcement.title}"
-
-        # notification = Notification(
-        #     sender=announcement.user,
-        #     receiver=None,
-        #     message=message,
-        #     read=False,
-        # )
-        # notification.save()
 
     except Exception as e:
         return str(e)

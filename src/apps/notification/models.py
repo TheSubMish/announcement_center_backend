@@ -1,15 +1,15 @@
-from django.conf import settings
-from .mongodb import database
-import uuid
-import datetime
-from django.db.models.signals import post_save
-from src.apps.announcement.models import Announcement,AnnouncementComment
-from src.apps.group.models import GroupMember
-from bson import Binary, UuidRepresentation
+# from django.conf import settings
+# from .mongodb import database
+# import uuid
+# import datetime
+# from django.db.models.signals import post_save
+# from src.apps.announcement.models import Announcement,AnnouncementComment
+# from src.apps.group.models import GroupMember
+# from bson import Binary, UuidRepresentation
 from src.apps.auth.models import User
 
-import logging
-logger = logging.getLogger('error_logger')
+# import logging
+# logger = logging.getLogger('error_logger')
 
 from django.db import models
 
