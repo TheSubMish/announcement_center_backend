@@ -21,6 +21,7 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Announcement,AnnouncementComment,AnnouncementLike
 from src.apps.group.models import AnnouncementGroup
 from src.apps.common.models import Status
+from src.apps.notification.tasks import announcement_like_unlike_notification
 from drf_spectacular.utils import extend_schema
 import logging
 
@@ -234,5 +235,10 @@ class AnnouncementLikeView(generics.GenericAPIView):
                 'dislike': serializer.validated_data.get("dislike",False)
             }
         )
+
+        if user_like.like:
+            announcement_like_unlike_notification.delay(user_like.id, "like")
+        if user_like.dislike:
+            announcement_like_unlike_notification.delay(user_like.id, "dislike")
 
         return Response({"msg":"Updated successfully"})

@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import Announcement,AnnouncementComment,AnnouncementLike
 from src.apps.common.utills import SpamWordDetect
 from src.apps.common.models import Status
-from src.apps.notification.tasks import announcement_creation_notification
+from src.apps.notification.tasks import announcement_creation_notification, announcement_comment_notification
 import logging
 
 logger = logging.getLogger('info_logger')
@@ -149,7 +149,7 @@ class CreateAnnouncementCommentSerializer(serializers.ModelSerializer):
             comment=comment,
             parent=parent,
         )
-        announcement_creation_notification.delay(str(announcement.id),"comment")
+        announcement_comment_notification.delay(str(announcement.id),"comment")
         logger.info(f'comment in announcement: {announcement.title} by user: {announcement_comment.user}')
 
         return announcement_comment
