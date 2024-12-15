@@ -105,6 +105,8 @@ class AnnouncementSerializer(serializers.ModelSerializer):
     total_comments = serializers.SerializerMethodField()
     likes = serializers.SerializerMethodField()
     dislikes = serializers.SerializerMethodField()
+    user_liked = serializers.SerializerMethodField()
+    user_disliked = serializers.SerializerMethodField()
 
     class Meta:
         model = Announcement
@@ -118,6 +120,18 @@ class AnnouncementSerializer(serializers.ModelSerializer):
 
     def get_dislikes(self, obj):
         return AnnouncementLike.objects.filter(announcement=obj, dislike=True).count()
+    
+    def get_user_liked(self, obj):
+        user = self.context.get('request').user # type: ignore
+        if user.is_authenticated:
+            return AnnouncementLike.objects.filter(announcement=obj, user=user, like=True).exists()
+        return False
+    
+    def get_user_disliked(self, obj):
+        user = self.context.get('request').user # type: ignore
+        if user.is_authenticated:
+            return AnnouncementLike.objects.filter(announcement=obj, user=user, dislike=True).exists()
+        return False
 
 class CreateAnnouncementCommentSerializer(serializers.ModelSerializer):
 

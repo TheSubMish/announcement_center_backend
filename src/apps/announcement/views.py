@@ -221,24 +221,37 @@ class AnnouncementLikeView(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        try:
-            announcement = Announcement.objects.get(id=announcement_id)
-        except Announcement.DoesNotExist:
-            return Response({'error': 'Announcement does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+        # try:
+        #     announcement = Announcement.objects.get(id=announcement_id)
+        # except Announcement.DoesNotExist:
+        #     return Response({'error': 'Announcement does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
         user = request.user
-        user_like = AnnouncementLike.objects.update_or_create(
-            user=user, 
-            announcement=announcement,
-            defaults={
-                'like': serializer.validated_data.get("like",False),
-                'dislike': serializer.validated_data.get("dislike",False)
-            }
-        )
+        announcement = serializer.validated_data.get("announcement")
+        existing_like = AnnouncementLike.objects.filter(
+            user=user, announcement=announcement
+        ).first()
+
+        if not existing_like:
+            # Create a new like/dislike object
+            user_like = AnnouncementLike.objects.create(
+                user=user,
+                announcement=announcement,
+                like=serializer.validated_data.get("like", False),
+                dislike=serializer.validated_data.get("dislike", False)
+            )
+        else:
+            # Update existing like/dislike based on request data
+            existing_like.like = serializer.validated_data.get("like", False)
+            existing_like.dislike = serializer.validated_data.get("dislike", False)
+            existing_like.save()
+
+            user_like = existing_like
 
         if user_like.like:
             announcement_like_unlike_notification.delay(user_like.id, "like")
         if user_like.dislike:
             announcement_like_unlike_notification.delay(user_like.id, "dislike")
 
-        return Response({"msg":"Updated successfully"})
+        return Response({"msg":serializer.data},status=status.HTTP_200_OK)
