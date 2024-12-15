@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from src.apps.auth.serializers import UserSerializer
+from src.apps.group.serializers import AnnouncementGroupSerializer
 
 from .models import Notification
 
@@ -11,11 +12,11 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 
 class NotificationReadSerializer(serializers.ModelSerializer):
-    # sender = UserSerializer(fields=["id","username"])
-    # receiver = UserSerializer(fields=["id","username"])
 
     sender = serializers.SerializerMethodField()
     receiver = serializers.SerializerMethodField()
+    announcement = serializers.SerializerMethodField()
+    group = serializers.SerializerMethodField()
 
     class Meta:
         model = Notification
@@ -26,6 +27,20 @@ class NotificationReadSerializer(serializers.ModelSerializer):
     
     def get_receiver(self,obj):
         return UserSerializer(instance=obj.receiver, fields=["id","username"]).data
+    
+    def get_announcement(self,obj):
+        from src.apps.announcement.serializers import AnnouncementSerializer
+
+        if obj.announcement:
+            return AnnouncementSerializer(instance=obj.announcement, fields=["id","title"]).data
+        else:
+            return None
+        
+    def get_group(self,obj):
+        if obj.group:
+            return AnnouncementGroupSerializer(instance=obj.group, fields=["id","name","category"]).data
+        else:
+            return None
 
 # class NotificationSerializer(serializers.Serializer):
 #     _id = serializers.UUIDField()

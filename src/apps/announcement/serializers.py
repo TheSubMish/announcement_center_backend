@@ -3,6 +3,7 @@ from .models import Announcement,AnnouncementComment,AnnouncementLike
 from src.apps.common.utills import SpamWordDetect
 from src.apps.common.models import Status
 from src.apps.notification.tasks import announcement_creation_notification, announcement_comment_notification
+from src.apps.common.serializers import DynamicSerializer
 import logging
 
 logger = logging.getLogger('info_logger')
@@ -101,7 +102,7 @@ class UpdateAnnouncementSerializer(serializers.ModelSerializer):
         logger.info(f'announcement updated: {instance.title} by user: {self.context["request"].user}')
         return instance
     
-class AnnouncementSerializer(serializers.ModelSerializer):
+class AnnouncementSerializer(DynamicSerializer):
     total_comments = serializers.SerializerMethodField()
     likes = serializers.SerializerMethodField()
     dislikes = serializers.SerializerMethodField()

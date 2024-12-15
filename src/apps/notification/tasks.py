@@ -32,6 +32,8 @@ def announcement_creation_notification(annoucement_id, type: str):
 
         for recipient in recipients:
             notification =  Notification.objects.create(
+                announcement = announcement,
+                group = announcement.group,
                 sender=announcement.user,
                 receiver=recipient,
                 type=notification_type,
@@ -68,6 +70,7 @@ def announcement_comment_notification(annoucement_comment_id, type: str):
             return "Invalid type"
 
         notification =  Notification.objects.create(
+            announcement = announcement_comment.announcement,
             sender=announcement_comment.user,
             receiver=announcement_comment.announcement.user,
             type=notification_type,
@@ -106,6 +109,7 @@ def announcement_like_unlike_notification(annoucement_like_id, type: str):
             return "Invalid type"
 
         notification =  Notification.objects.create(
+            announcement = announcement_like_unlike.announcement,
             sender=announcement_like_unlike.user,
             receiver=announcement_like_unlike.announcement.user,
             type=notification_type,

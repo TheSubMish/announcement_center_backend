@@ -7,6 +7,8 @@
 # from bson import Binary, UuidRepresentation
 import uuid
 from src.apps.auth.models import User
+from src.apps.announcement.models import Announcement
+from src.apps.group.models import AnnouncementGroup
 
 # import logging
 # logger = logging.getLogger('error_logger')
@@ -24,6 +26,8 @@ class NotificationType(models.TextChoices):
 
 class Notification(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    group = models.ForeignKey(AnnouncementGroup, on_delete=models.SET_NULL, null=True, blank=True)
+    announcement = models.ForeignKey(Announcement, on_delete=models.SET_NULL, null=True, blank=True)
     sender = models.ForeignKey(User,on_delete=models.SET_NULL, null=True, blank=True, related_name="sender")
     receiver = models.ForeignKey(User,on_delete=models.SET_NULL, null=True, blank=True, related_name="receiver")
     type = models.CharField(max_length=100, choices=NotificationType.choices,default=NotificationType.GROUP_JOIN)

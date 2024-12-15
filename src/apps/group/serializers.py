@@ -1,5 +1,6 @@
 from rest_framework import serializers,exceptions
 from src.apps.group.models import AnnouncementGroup,Rating,GroupMember,Role,GroupType,Category
+from src.apps.common.serializers import DynamicSerializer
 from src.apps.common.utills import SpamWordDetect
 from src.apps.common.models import Status
 import logging
@@ -116,7 +117,7 @@ class UpdateAnnouncementGroupSerializer(serializers.ModelSerializer):
         return instance
     
 
-class AnnouncementGroupSerializer(serializers.ModelSerializer):
+class AnnouncementGroupSerializer(DynamicSerializer):
     joined = serializers.SerializerMethodField()
     average_rating = serializers.SerializerMethodField()
     category = serializers.StringRelatedField()
