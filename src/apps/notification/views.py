@@ -1,7 +1,7 @@
 from rest_framework import generics,permissions,status,exceptions
 from rest_framework.response import Response
 # from .serializers import NotificationSerializer,ReadNotificationSerializer
-from .serializers import NotificationSerializer
+from .serializers import NotificationSerializer, NotificationReadSerializer
 from .models import Notification
 from django.conf import settings
 from .mongodb import database
@@ -14,7 +14,7 @@ logger = logging.getLogger('error_logger')
 
 class ListNotificationView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = NotificationSerializer
+    serializer_class = NotificationReadSerializer
     queryset = None
 
     def get_queryset(self):

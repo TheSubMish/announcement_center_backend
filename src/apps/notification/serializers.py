@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from src.apps.auth.serializers import UserSerializer
 
 from .models import Notification
 
@@ -8,6 +9,23 @@ class NotificationSerializer(serializers.ModelSerializer):
         model = Notification
         fields = "__all__"
 
+
+class NotificationReadSerializer(serializers.ModelSerializer):
+    # sender = UserSerializer(fields=["id","username"])
+    # receiver = UserSerializer(fields=["id","username"])
+
+    sender = serializers.SerializerMethodField()
+    receiver = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Notification
+        fields = "__all__"
+
+    def get_sender(self,obj):
+        return UserSerializer(instance=obj.sender, fields=["id","username"]).data
+    
+    def get_receiver(self,obj):
+        return UserSerializer(instance=obj.receiver, fields=["id","username"]).data
 
 # class NotificationSerializer(serializers.Serializer):
 #     _id = serializers.UUIDField()

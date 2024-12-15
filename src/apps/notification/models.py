@@ -1,11 +1,11 @@
 # from django.conf import settings
 # from .mongodb import database
-# import uuid
 # import datetime
 # from django.db.models.signals import post_save
 # from src.apps.announcement.models import Announcement,AnnouncementComment
 # from src.apps.group.models import GroupMember
 # from bson import Binary, UuidRepresentation
+import uuid
 from src.apps.auth.models import User
 
 # import logging
@@ -23,7 +23,7 @@ class NotificationType(models.TextChoices):
     ANNOUNCEMENT_UNLIKE = 'announcement_unlike','Announcement Unlike'
 
 class Notification(models.Model):
-    id = models.UUIDField(primary_key=True, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     sender = models.ForeignKey(User,on_delete=models.SET_NULL, null=True, blank=True, related_name="sender")
     receiver = models.ForeignKey(User,on_delete=models.SET_NULL, null=True, blank=True, related_name="receiver")
     type = models.CharField(max_length=100, choices=NotificationType.choices,default=NotificationType.GROUP_JOIN)

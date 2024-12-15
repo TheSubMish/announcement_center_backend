@@ -2,6 +2,7 @@ from rest_framework import serializers,exceptions
 from src.apps.auth.models import User
 from django.db import transaction
 from src.apps.common.otp import OTPhandlers,OTPAction
+from src.apps.common.serializers import DynamicSerializer
 import logging
 
 logger = logging.getLogger('info_logger')
@@ -88,7 +89,7 @@ class UserLogoutSerializer(serializers.Serializer):
 
     refresh = serializers.CharField(max_length=255*2,required=True,allow_blank=False)
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(DynamicSerializer):
 
     class Meta:
         model = User
