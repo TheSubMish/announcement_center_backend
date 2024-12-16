@@ -38,7 +38,7 @@ class NotificationReadSerializer(serializers.ModelSerializer):
         
     def get_group(self,obj):
         if obj.group:
-            return AnnouncementGroupSerializer(instance=obj.group, fields=["id","name","category"]).data
+            return AnnouncementGroupSerializer(instance=obj.group, fields=["group_id","name","category"]).data
         else:
             return None
 
