@@ -22,6 +22,9 @@ from .models import Announcement,AnnouncementComment,AnnouncementLike
 from src.apps.group.models import AnnouncementGroup
 from src.apps.common.models import Status
 from src.apps.notification.tasks import announcement_like_unlike_notification
+from src.apps.analytics.models import AnnouncementImpression
+from src.apps.common.utills import get_user_ip
+import geocoder
 from drf_spectacular.utils import extend_schema
 import logging
 
@@ -79,6 +82,16 @@ class RetrieveAnnouncementView(generics.RetrieveAPIView):
             announcement = Announcement.objects.select_related("user","group").get(id=id)
         except Announcement.DoesNotExist:
             raise exceptions.APIException({'error': 'Announcement does not exist'})
+        
+        user_ip = geocoder.ip(str(get_user_ip(self.request)))
+        
+        AnnouncementImpression.objects.create(
+            announcement=announcement,
+            user=self.request.user,
+            country = (user_ip.country if user_ip.ok else "unknown"),
+            city = (user_ip.city if user_ip.ok else "unknown"), 
+        )
+
         return announcement
     
 

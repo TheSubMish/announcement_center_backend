@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'src.apps.group.apps.GroupConfig',
     'src.apps.payment',
     'src.apps.notification',
+    'src.apps.analytics',
 ]
 
 MIDDLEWARE = [
