@@ -2,7 +2,6 @@ from django.db import models
 from src.apps.group.models import AnnouncementGroup
 from src.apps.announcement.models import Announcement
 from src.apps.auth.models import User
-# from src.apps.auth.models import User
 
 # Create your models here.
 class GroupImpression(models.Model):
