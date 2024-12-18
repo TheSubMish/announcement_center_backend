@@ -21,7 +21,7 @@ from .permissions import (
 from .filters import AnnouncementGroupFilter
 from .models import AnnouncementGroup,Rating,GroupMember,GroupType,Category
 from src.apps.common.models import Status
-from src.apps.analytics.models import AnnouncementImpression
+from src.apps.analytics.models import GroupImpression
 from src.apps.common.utills import get_user_ip
 import geocoder
 from drf_spectacular.utils import extend_schema, OpenApiParameter
@@ -233,11 +233,11 @@ class RetrieveAnnouncementGroupView(generics.RetrieveAPIView):
         serializer = self.get_serializer(instance=announcement_group)
         user_ip = geocoder.ip(str(get_user_ip(self.request)))
         
-        AnnouncementImpression.objects.create(
-            announcement=announcement,
+        GroupImpression.objects.create(
+            group=announcement_group,
             user=self.request.user,
-            country = (user_ip.country if user_ip.ok else "unknown"),
-            city = (user_ip.city if user_ip.ok else "unknown"), 
+            country = (user_ip.country if user_ip.country else "unknown"),
+            city = (user_ip.city if user_ip.city else "unknown"), 
         )
         return Response(serializer.data)
 

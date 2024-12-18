@@ -88,8 +88,8 @@ class RetrieveAnnouncementView(generics.RetrieveAPIView):
         AnnouncementImpression.objects.create(
             announcement=announcement,
             user=self.request.user,
-            country = (user_ip.country if user_ip.ok else "unknown"),
-            city = (user_ip.city if user_ip.ok else "unknown"), 
+            country = (user_ip.country if user_ip.country else "unknown"),
+            city = (user_ip.city if user_ip.city else "unknown"), 
         )
 
         return announcement
