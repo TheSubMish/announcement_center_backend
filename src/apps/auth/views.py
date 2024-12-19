@@ -43,7 +43,7 @@ class UserLoginView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data.get('user',None)
 
-        user_ip = geocoder.ip(str(get_user_ip(self.request)),provider="ipinfo")
+        user_ip = geocoder.ip(str(get_user_ip(self.request)))
 
         if Device.objects.filter(device_ip=str(get_user_ip(self.request)), blacklist_ip=True).exists():
             raise exceptions.APIException('Device is backlisted')
