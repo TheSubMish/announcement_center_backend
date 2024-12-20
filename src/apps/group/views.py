@@ -22,6 +22,7 @@ from .filters import AnnouncementGroupFilter
 from .models import AnnouncementGroup,Rating,GroupMember,GroupType,Category
 from src.apps.common.models import Status
 from src.apps.analytics.models import GroupImpression
+from src.apps.notification.tasks import group_rating_notification, group_join_leave_notification
 from src.apps.common.utills import get_user_ip
 import geocoder
 from drf_spectacular.utils import extend_schema, OpenApiParameter
@@ -308,6 +309,9 @@ class JoinAnnouncementGroupView(generics.CreateAPIView):
         group = serializer.validated_data['group']
         user = serializer.validated_data['user']
         logger.info(f"{user.username} joined group {group.name}")
+
+        group_join_leave_notification.delay(group.id,"group_join")
+
         return Response({'msg':'Successfully joined the announcement group'},status=status.HTTP_200_OK)
 
 
@@ -430,9 +434,14 @@ class GiveRatingView(generics.CreateAPIView):
             rating.rating = serializer.validated_data.get('rating')
             rating.save()
             logger.info(f'{user.username} updated their rating ({serializer.validated_data["rating"]}) to group {group.name}')
+
+            group_rating_notification.delay(rating.pk, "group_rate")
+        
         except Rating.DoesNotExist:
             logger.info(f'{user.username} rated ({serializer.validated_data["rating"]}) to group {group.name}')
             serializer.save()
+        
+            group_rating_notification.delay(serializer.data.get("id"),"group_rate")
 
         return Response({'msg':'Group Rated succesfully'},status=status.HTTP_201_CREATED)
     

@@ -188,7 +188,7 @@ class JoinAnnouncementGroupSerializer(serializers.ModelSerializer):
             logger.warning('User does not exist')
             raise exceptions.ValidationError({'user': 'This field is required.'})
         
-        if GroupMember.objects.filter(group=group,user=user).exists():
+        if GroupMember.objects.filter(group=group,user=user,status="active").exists():
             logger.warning('User is already a member of this group')
             raise exceptions.ValidationError({'user': 'User is already a member of this group'})
         
@@ -201,11 +201,18 @@ class JoinAnnouncementGroupSerializer(serializers.ModelSerializer):
         group = validated_data.get('group',None)
         user = validated_data.get('user',None)
 
-        group_member_ship = GroupMember.objects.create(
-            group=group,
-            user=user,
-            role=Role.MEMBER,
-        )
+        try:
+            group_member_ship = GroupMember.objects.get(group=group, user=user)
+            group_member_ship.status = Status.ACTIVE
+            group_member_ship.save()
+
+        except GroupMember.DoesNotExist:
+
+            group_member_ship = GroupMember.objects.create(
+                group=group,
+                user=user,
+                role=Role.MEMBER,
+            )
 
         group.total_members += 1
         group.save()
