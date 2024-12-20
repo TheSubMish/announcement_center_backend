@@ -1,5 +1,6 @@
 from rest_framework import serializers,exceptions
 from src.apps.group.models import AnnouncementGroup,Rating,GroupMember,Role,GroupType,Category
+from src.apps.auth.serializers import UserSerializer
 from src.apps.common.serializers import DynamicSerializer
 from src.apps.common.utills import SpamWordDetect
 from src.apps.common.models import Status
@@ -122,6 +123,7 @@ class AnnouncementGroupSerializer(DynamicSerializer):
     average_rating = serializers.SerializerMethodField()
     category = serializers.StringRelatedField()
     admin = serializers.StringRelatedField()
+    admin_id = serializers.SerializerMethodField()
 
     class Meta:
         model = AnnouncementGroup
@@ -131,6 +133,7 @@ class AnnouncementGroupSerializer(DynamicSerializer):
             'description', 
             'image', 
             'admin',
+            'admin_id',
             'category',
             'group_type',
             'total_members',
@@ -153,6 +156,9 @@ class AnnouncementGroupSerializer(DynamicSerializer):
     def get_average_rating(self, obj):
         average_rating = obj.average_rating()  # Call the method from the model
         return average_rating if average_rating else 0.0
+    
+    def get_admin_id(self, obj):
+        return obj.admin.id if obj.admin else None
     
 class JoinAnnouncementGroupSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
@@ -308,42 +314,57 @@ class ChangeMemberRoleSerializer(serializers.ModelSerializer):
         model = GroupMember
         fields = '__all__'
 
-    def validate(self, attrs):
-        group = attrs.get('group',None)
-        user = attrs.get('user',None)
-        role = attrs.get('role',None)
+    # def validate(self, attrs):
+    #     group = attrs.get('group',None)
+    #     user = attrs.get('user',None)
+    #     role = attrs.get('role',None)
 
-        if group is None:
-            logger.warning('Group does not exist')
-            raise exceptions.ValidationError({'group': 'This field is required.'})
+    #     if group is None:
+    #         logger.warning('Group does not exist')
+    #         raise exceptions.ValidationError({'group': 'This field is required.'})
         
-        if user is None:
-            logger.warning('User does not exist')
-            raise exceptions.ValidationError({'user': 'This field is required.'})
+    #     if user is None:
+    #         logger.warning('User does not exist')
+    #         raise exceptions.ValidationError({'user': 'This field is required.'})
         
-        if role is None:
-            logger.warning('Role does not exist')
-            raise exceptions.ValidationError({'role': 'This field is required.'})
+    #     if role is None:
+    #         logger.warning('Role does not exist')
+    #         raise exceptions.ValidationError({'role': 'This field is required.'})
         
-        try:
-            group_member = GroupMember.objects.get(user=user, group=group)
-        except:
-            logger.warning("User is not a member of the group")
-            raise exceptions.APIException({'error': 'User is not a member of the group'})
+    #     try:
+    #         group_member = GroupMember.objects.get(user=user, group=group)
+    #     except:
+    #         logger.warning("User is not a member of the group")
+    #         raise exceptions.APIException({'error': 'User is not a member of the group'})
         
-        group_admin = self.context['request'].user
-        if group.admin != group_admin:
-            logger.warning("User is not the group admin")
-            raise exceptions.APIException({'error': 'User is not the group admin'})
+    #     group_admin = self.context['request'].user
+    #     if group.admin != group_admin:
+    #         logger.warning("User is not the group admin")
+    #         raise exceptions.APIException({'error': 'User is not the group admin'})
         
-        attrs['group_member'] = group_member
+    #     attrs['group_member'] = group_member
         
-        return attrs
+    #     return attrs
+
+    def update(self, instance, validated_data):
+        return super().update(instance, validated_data)
     
-class ListGroupMemberSerializer(serializers.Serializer):
-    user_id = serializers.UUIDField()
-    user = serializers.CharField(max_length=255)
-    role = serializers.CharField(max_length=255)
+# class ListGroupMemberSerializer(serializers.Serializer):
+#     user_id = serializers.UUIDField()
+#     user = serializers.CharField(max_length=255)
+#     role = serializers.CharField(max_length=255)
 
-    def get_user_id(self,obj):
-        return obj.user.id
+#     def get_user_id(self,obj):
+#         return obj.user.id
+
+class ListGroupMemberSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+
+
+    class Meta:
+        model = GroupMember
+        fields = '__all__'
+
+
+    def get_user(self, obj):
+        return UserSerializer(instance=obj.user, fields=["id","username"]).data

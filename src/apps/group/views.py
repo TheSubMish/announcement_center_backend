@@ -382,19 +382,27 @@ class LeaveAnnouncementGroupView(generics.GenericAPIView):
         return Response({'msg':'Successfully left the announcement group'},status=status.HTTP_200_OK)
     
 class ChangeMemberRoleView(generics.UpdateAPIView):
-    permission_classes = [CanChangeMemberRole]
+    # permission_classes = [CanChangeMemberRole]
     serializer_class = ChangeMemberRoleSerializer
 
-    def update(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+    def get_queryset(self):
+        member_id = self.kwargs['pk']
 
-        group_member = serializer.validated_data.get('group_member')
+        group_member = GroupMember.objects.filter(id=member_id)
+        if not group_member.exists():
+            raise exceptions.APIException({'error': 'Group member does not exist'})
+        return group_member
+
+    # def update(self, request, *args, **kwargs):
+    #     serializer = self.get_serializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+
+    #     group_member = serializer.validated_data.get('group_member')
         
-        group_member.role = serializer.validated_data.get('role')
-        group_member.save()
+    #     group_member.role = serializer.validated_data.get('role')
+    #     group_member.save()
 
-        return Response({'msg':'Member role updated successfully'},status=status.HTTP_200_OK)
+    #     return Response({'msg':'Member role updated successfully'},status=status.HTTP_200_OK)
     
 class ListGroupMemberView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
