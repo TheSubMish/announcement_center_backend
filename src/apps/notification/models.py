@@ -18,6 +18,7 @@ from django.db import models
 class NotificationType(models.TextChoices):
     GROUP_JOIN = 'group_join','Group Join'
     GROUP_LEAVE = 'group_leave','Group Leave'
+    GROUP_RATE = 'group_rate','Group Rate'
     ANNOCUNCEMENT_CREATE = 'announcement_create','Announcement Create'
     ANNOUNCEMENT_UPDATE = 'announcement_update','Announcement Update'
     ANNOUNCEMENT_COMMENT_CREATE = 'announcement_comment_create','Announcement Comment Create'

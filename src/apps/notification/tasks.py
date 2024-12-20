@@ -1,6 +1,7 @@
 from celery import shared_task
 
 from src.apps.announcement.models import Announcement, AnnouncementComment, AnnouncementLike
+from src.apps.group.models import Rating
 from src.apps.notification.models import Notification, NotificationType
 from src.apps.notification.serializers import NotificationSerializer
 from src.apps.notification.consumers import send_notification
@@ -114,6 +115,43 @@ def announcement_like_unlike_notification(annoucement_like_id, type: str):
             receiver=announcement_like_unlike.announcement.user,
             type=notification_type,
             message=f"{announcement_like_unlike.announcement.id}",
+            read=False,
+        )
+
+        data = NotificationSerializer(instance=notification).data
+
+        payload = {
+            "type": "notify",
+            "data": {"type": "notification", "notification": data},
+            "group_names": [f"notifications_{str(notification.receiver.pk)}"], # type: ignore
+        }
+
+        send_notification(
+            payload=payload
+        )
+
+    except Exception as e:
+        return str(e)
+
+
+@shared_task
+def group_rating_notification(rate_id, type: str):
+
+    try:
+
+        group_rate = Rating.objects.get(id=rate_id)
+
+        if type == "rate":
+            notification_type = NotificationType.GROUP_RATE
+        else:
+            return "Invalid type"
+
+        notification =  Notification.objects.create(
+            group = group_rate.group,
+            sender=group_rate.user,
+            receiver=group_rate.group.admin,
+            type=notification_type,
+            message=f"{group_rate.group.pk}",
             read=False,
         )
 
