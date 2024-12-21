@@ -135,16 +135,18 @@ def announcement_like_unlike_notification(annoucement_like_id, type: str):
 
 
 @shared_task
-def group_join_leave_notification(group_id, type: str):
+def group_join_leave_kick_notification(group_id, type: str):
 
     try:
 
         group_member = GroupMember.objects.get(group__group_id=group_id)
 
         if type == "group_join":
-            notification_type = NotificationType.GROUP_RATE
-        if type == "group_leave":
+            notification_type = NotificationType.GROUP_JOIN
+        elif type == "group_leave":
             notification_type = NotificationType.GROUP_LEAVE
+        elif type == "group_kick":
+            notification_type = NotificationType.GROUP_KICK
         else:
             return "Invalid type"
 

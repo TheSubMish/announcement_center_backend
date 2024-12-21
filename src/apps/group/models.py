@@ -93,6 +93,7 @@ class Role(models.TextChoices):
 class GroupMember(BaseModel):
     group = models.ForeignKey(AnnouncementGroup,on_delete=models.CASCADE)
     user = models.ForeignKey(User,on_delete=models.CASCADE)
+    flagged = models.BooleanField(default=False) # true if user is kicked from group
     role = models.CharField(
         max_length=255,
         null= False,

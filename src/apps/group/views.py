@@ -22,7 +22,7 @@ from .filters import AnnouncementGroupFilter
 from .models import AnnouncementGroup,Rating,GroupMember,GroupType,Category
 from src.apps.common.models import Status
 from src.apps.analytics.models import GroupImpression
-from src.apps.notification.tasks import group_rating_notification, group_join_leave_notification
+from src.apps.notification.tasks import group_rating_notification, group_join_leave_kick_notification
 from src.apps.common.utills import get_user_ip
 import geocoder
 from drf_spectacular.utils import extend_schema, OpenApiParameter
@@ -310,7 +310,7 @@ class JoinAnnouncementGroupView(generics.CreateAPIView):
         user = serializer.validated_data['user']
         logger.info(f"{user.username} joined group {group.name}")
 
-        group_join_leave_notification.delay(group.id,"group_join")
+        group_join_leave_kick_notification.delay(group.id,"group_join")
 
         return Response({'msg':'Successfully joined the announcement group'},status=status.HTTP_200_OK)
 
@@ -378,7 +378,15 @@ class LeaveAnnouncementGroupView(generics.GenericAPIView):
 
         group = serializer.validated_data['group']
         user = serializer.validated_data['user']
-        logger.info(f'{user.username} left group {group.name}')
+        flagged = serializer.validated_data['flagged']
+
+        if flagged:
+            logger.info(f'{user.username} was kicked from group {group.name}')
+            group_join_leave_kick_notification.delay(group.pk, "group_kick")
+        else:
+            logger.info(f'{user.username} left group {group.name}')
+            group_join_leave_kick_notification.delay(group.pk, "group_leave")
+
         return Response({'msg':'Successfully left the announcement group'},status=status.HTTP_200_OK)
     
 class ChangeMemberRoleView(generics.UpdateAPIView):

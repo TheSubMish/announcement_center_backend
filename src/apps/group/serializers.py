@@ -226,14 +226,16 @@ class JoinAnnouncementGroupSerializer(serializers.ModelSerializer):
     
 class LeaveAnnouncementGroupSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    flagged = serializers.BooleanField(default=False)
 
     class Meta:
         model = GroupMember
-        fields = ['group','user']
+        fields = ['group','user',"flagged"]
 
     def validate(self, attrs):
         group = attrs.get('group',None)
         user = attrs.get('user',None)
+        flagged = attrs.get('flagged',False)
 
         if group is None:
             logger.warning('Group does not exist')
@@ -253,10 +255,15 @@ class LeaveAnnouncementGroupSerializer(serializers.ModelSerializer):
             logger.warning("Admin cannot leave the group")
             raise exceptions.APIException({'error': 'Admin cannot leave the group'})
         
-        group_member.status = Status.INACTIVE
+        if flagged:
+            group_member.flagged = True
+        
+        else:
+            group_member.status = Status.INACTIVE
 
         group.total_members = group.total_members - 1
         group.save()
+        group_member.save()
         
         return attrs
     
