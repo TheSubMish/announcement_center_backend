@@ -26,6 +26,7 @@ urlpatterns = [
             path('announcement/',include('src.apps.announcement.urls')),
             path('notification/',include('src.apps.notification.urls')),
             path('payment/',include('src.apps.payment.urls')),
+            path('analytics/',include('src.apps.analytics.urls')),
         ]))
     ]))
 ]

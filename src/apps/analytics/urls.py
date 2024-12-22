@@ -7,7 +7,7 @@ from .views import (
 )
 
 
-urls_pattern = [
+urlpatterns = [
     path('group/<uuid:pk>/impression/', GroupImpressionView.as_view(), name='group-impression-api'),
     path('announcement/<uuid:pk>/impression/', AnnouncementImpressionView.as_view(), name='announcement-impression-api'),
     path('announcement/<uuid:pk>/like-dislike/', AnnouncementLikeDislikeView.as_view(), name='announcement-like-dislike-api'),
