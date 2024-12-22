@@ -22,17 +22,17 @@ class GroupImpressionView(APIView):
         try:
             group = AnnouncementGroup.objects.get(pk=group_id)
             if not group.premium_group:
-                return Response({'error': 'You do not have permission'}, status=403)
+                return Response({'error': 'You do not have permission'}, status=status.HTTP_403_FORBIDDEN)
             
             if not GroupMember.objects.filter(
                 group=group,
                 user=request.user,
                 role__in=["admin", "moderator"]
             ).exists():
-                return Response({'error': 'You do not have permission'}, status=403)
+                return Response({'error': 'You do not have permission'}, status=status.HTTP_403_FORBIDDEN)
             
         except AnnouncementGroup.DoesNotExist:
-            return Response({'error': 'Announcement group does not exist'}, status=404)
+            return Response({'error': 'Announcement group does not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
         range = self.request.query_params.get("range", None) # type: ignore
         if range is None:
@@ -48,7 +48,7 @@ class GroupImpressionView(APIView):
             # Calculate the date 30 days ago
             last_date = today - timedelta(days=30)
 
-        if range == "3 months":
+        if range == "3_months":
             # Calculate the date 90 days ago
             last_date = today - timedelta(days=90)
 
