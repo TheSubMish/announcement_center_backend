@@ -11,6 +11,10 @@ class ImpressionSerializer(serializers.Serializer):
     #     # Format the date as a string (e.g., "YYYY-MM-DD")
     #     return obj['date'].strftime('%Y-%m-%d')
 
+class CountryCitySerializer(serializers.Serializer):
+    label = serializers.CharField(max_length=250)
+    count = serializers.IntegerField()
+
 class AnnouncementLikeDislikeSerializer(serializers.Serializer):
     date = serializers.DateField()
     count = serializers.IntegerField()
