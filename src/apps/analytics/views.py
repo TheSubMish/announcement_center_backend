@@ -55,7 +55,7 @@ class GroupImpressionView(APIView):
         elif range == "3_months":
             last_date = today - timedelta(days=90)
         elif range == "all_time":
-            last_date = timezone.datetime(1970, 1, 1, tzinfo=timezone.utc)
+            last_date = timezone.datetime(1970, 1, 1)
         else:
             return Response({'error': 'Invalid range value'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -217,6 +217,9 @@ class GroupRateAnalyticsView(APIView):
         
         return Response(serializer.data)
 
+class GroupMemberStatus(generics.GenericAPIView):
+    pass
+
 
 class AnnouncementImpressionView(generics.GenericAPIView):
     serializer_class = ImpressionSerializer
@@ -261,6 +264,13 @@ class AnnouncementImpressionView(generics.GenericAPIView):
             # Calculate the date 0 days ago
             last_date = timezone.datetime(1970, 1, 1)
 
+        # Generate all dates in the range
+        all_dates = []
+        current_date = last_date
+        while current_date <= today:
+            all_dates.append(current_date.date())
+            current_date += timedelta(days=1)
+
         # Query to count impressions per day
         impressions_per_day = (
             AnnouncementImpression.objects
@@ -270,10 +280,18 @@ class AnnouncementImpressionView(generics.GenericAPIView):
             .annotate(count=Count('id'))
             .order_by('date')
         )
-        serializer = ImpressionSerializer(impressions_per_day,many=True)
+
+        # Transform the impressions queryset into a dictionary
+        impressions_dict = {item['date']: item['count'] for item in impressions_per_day}
+
+        # Fill missing dates with count 0
+        filled_impressions = [
+            {'date': date, 'count': impressions_dict.get(date, 0)}
+            for date in all_dates
+        ]
+        serializer = ImpressionSerializer(filled_impressions, many=True)
         
         return Response(serializer.data)
-    
 
 
 class AnnouncementLikeDislikeView(APIView):
