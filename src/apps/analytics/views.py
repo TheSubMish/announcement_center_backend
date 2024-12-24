@@ -5,6 +5,8 @@ from django.db.models import Count,F,Avg
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 from datetime import timedelta
+from django.utils.timezone import make_aware
+from collections import defaultdict
 
 from src.apps.group.models import AnnouncementGroup, GroupMember, Rating
 from src.apps.announcement.models import Announcement, AnnouncementLike, AnnouncementComment
@@ -38,39 +40,53 @@ class GroupImpressionView(APIView):
         except AnnouncementGroup.DoesNotExist:
             return Response({'error': 'Announcement group does not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Parse the "range" query parameter
         range = self.request.query_params.get("range", None) # type: ignore
         if range is None:
             return Response({'error': 'range is required'}, status=status.HTTP_400_BAD_REQUEST)
         
         today = timezone.now()
         
+        # Determine the last_date based on the range
         if range == "this_week":
-            # Calculate the date 7 days ago
             last_date = today - timedelta(days=7)
-
-        if range == "this_month":
-            # Calculate the date 30 days ago
+        elif range == "this_month":
             last_date = today - timedelta(days=30)
-
-        if range == "3_months":
-            # Calculate the date 90 days ago
+        elif range == "3_months":
             last_date = today - timedelta(days=90)
+        elif range == "all_time":
+            last_date = timezone.datetime(1970, 1, 1, tzinfo=timezone.utc)
+        else:
+            return Response({'error': 'Invalid range value'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if range == "all_time":
-            # Calculate the date 0 days ago
-            last_date = timezone.datetime(1970, 1, 1)
+        # Generate all dates in the range
+        all_dates = []
+        current_date = last_date
+        while current_date <= today:
+            all_dates.append(current_date.date())
+            current_date += timedelta(days=1)
 
-        # Query to count impressions per day
-        impressions_per_day = (
+        # Query impressions per day
+        impressions = (
             GroupImpression.objects
-            .filter(group=group,created_at__gte=last_date, created_at__lte=today)
+            .filter(group=group, created_at__gte=last_date, created_at__lte=today)
             .annotate(date=TruncDate('created_at'))
             .values('date')
             .annotate(count=Count('id'))
             .order_by('date')
         )
-        serializer = ImpressionSerializer(impressions_per_day,many=True)
-        
+
+        # Transform the impressions queryset into a dictionary
+        impressions_dict = {item['date']: item['count'] for item in impressions}
+
+        # Fill missing dates with count 0
+        filled_impressions = [
+            {'date': date, 'count': impressions_dict.get(date, 0)}
+            for date in all_dates
+        ]
+
+        # Serialize the results
+        serializer = ImpressionSerializer(filled_impressions, many=True)
         return Response(serializer.data)
 
 
@@ -172,6 +188,13 @@ class GroupRateAnalyticsView(APIView):
             # Calculate the date 0 days ago
             last_date = timezone.datetime(1970, 1, 1)
 
+        # Generate all dates in the range
+        all_dates = []
+        current_date = last_date
+        while current_date <= today:
+            all_dates.append(current_date.date())
+            current_date += timedelta(days=1)
+
         # Query to find average rating in per day
         average_rating_per_day = (
             Rating.objects
@@ -181,7 +204,16 @@ class GroupRateAnalyticsView(APIView):
             .annotate(count=Avg('rating'))
             .order_by('date')
         )
-        serializer = ImpressionSerializer(average_rating_per_day, many=True)
+
+        # Transform the impressions queryset into a dictionary
+        impressions_dict = {item['date']: item['count'] for item in average_rating_per_day}
+
+        # Fill missing dates with count 0
+        filled_rating = [
+            {'date': date, 'count': impressions_dict.get(date, 0)}
+            for date in all_dates
+        ]
+        serializer = ImpressionSerializer(filled_rating, many=True)
         
         return Response(serializer.data)
 
