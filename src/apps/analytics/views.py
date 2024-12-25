@@ -62,7 +62,7 @@ class GroupImpressionView(APIView):
         # Generate all dates in the range
         all_dates = []
         current_date = last_date
-        while current_date <= today:
+        while current_date.replace(tzinfo=None) <= today.replace(tzinfo=None):
             all_dates.append(current_date.date())
             current_date += timedelta(days=1)
 
@@ -191,7 +191,7 @@ class GroupRateAnalyticsView(APIView):
         # Generate all dates in the range
         all_dates = []
         current_date = last_date
-        while current_date <= today:
+        while current_date.replace(tzinfo=None) <= today.replace(tzinfo=None):
             all_dates.append(current_date.date())
             current_date += timedelta(days=1)
 
@@ -217,8 +217,101 @@ class GroupRateAnalyticsView(APIView):
         
         return Response(serializer.data)
 
-class GroupMemberStatus(generics.GenericAPIView):
-    pass
+class GroupMemberStatusView(generics.GenericAPIView):
+    serializer_class = ImpressionSerializer
+
+    def get(self, request, *args, **kwargs):
+        group_id = kwargs.get('pk')
+
+        try:
+            group = AnnouncementGroup.objects.get(pk=group_id)
+            if not group.premium_group:
+                return Response({'error': 'You do not have permission'}, status=403)
+            
+            if not GroupMember.objects.filter(
+                group=group,
+                user=request.user,
+                role__in=["admin", "moderator"]
+            ).exists():
+                return Response({'error': 'You do not have permission'}, status=403)
+            
+        except AnnouncementGroup.DoesNotExist:
+            return Response({'error': 'Announcement group does not exist'}, status=404)
+
+        range = self.request.query_params.get("range", None) # type: ignore
+
+        if range is None:
+            return Response({'error': 'range is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        today = timezone.now()
+        if range == "this_week":
+            # Calculate the date 7 days ago
+            last_date = today - timedelta(days=7)
+        
+        if range == "this_month":
+            # Calculate the date 30 days ago
+            last_date = today - timedelta(days=30)
+        
+        if range == "3_months":
+            # Calculate the date 90 days ago
+            last_date = today - timedelta(days=90)
+        
+        if range == "all_time":
+            # Calculate the date 0 days ago
+            last_date = timezone.datetime(1970, 1, 1)
+
+        # Generate all dates in the range
+        all_dates = []
+        current_date = last_date
+        while current_date.replace(tzinfo=None) <= today.replace(tzinfo=None):
+            all_dates.append(current_date.date())
+            current_date += timedelta(days=1)
+
+        member_join = (
+            GroupMember.objects
+            .filter(group=group, created_at__gte=last_date, created_at__lte=today,status="active")
+            .annotate(date=TruncDate('created_at'))
+            .values('date')
+            .annotate(count=Count('id'))
+            .order_by('date')
+        )
+
+        # Transform the impressions queryset into a dictionary
+        impressions_dict = {item['date']: item['count'] for item in member_join}
+
+        # Fill missing dates with count 0
+        filled_join_count = [
+            {'date': date, 'count': impressions_dict.get(date, 0)}
+            for date in all_dates
+        ]
+        join_serializer = ImpressionSerializer(filled_join_count, many=True)
+
+
+        member_leave = (
+            GroupMember.objects
+            .filter(group=group, created_at__gte=last_date, created_at__lte=today,status="inactive")
+            .annotate(date=TruncDate('created_at'))
+            .values('date')
+            .annotate(count=Count('id'))
+            .order_by('date')
+        )
+
+        # Transform the impressions queryset into a dictionary
+        impressions_dict = {item['date']: item['count'] for item in member_leave}
+
+        # Fill missing dates with count 0
+        filled_leave_count = [
+            {'date': date, 'count': impressions_dict.get(date, 0)}
+            for date in all_dates
+        ]
+        leave_serializer = ImpressionSerializer(filled_leave_count, many=True)
+
+        data = {
+            "join_count": join_serializer.data,
+            "leave_count": leave_serializer.data
+        }
+
+        return Response(data)
 
 
 class AnnouncementImpressionView(generics.GenericAPIView):
@@ -267,7 +360,7 @@ class AnnouncementImpressionView(generics.GenericAPIView):
         # Generate all dates in the range
         all_dates = []
         current_date = last_date
-        while current_date <= today:
+        while current_date.replace(tzinfo=None) <= today.replace(tzinfo=None):
             all_dates.append(current_date.date())
             current_date += timedelta(days=1)
 
