@@ -8,6 +8,7 @@ from .serializers import (
     UpdateAnnouncementCommentSerializer,
     AnnouncementCommentSerializer,
     AnnouncementLikeSerializer,
+    AnnouncementInterestSerializer
 )
 from .permissions import (
     CanCreateAnnouncement,
@@ -18,7 +19,7 @@ from .permissions import (
     CanDeleteComment,
 )
 from rest_framework.permissions import IsAuthenticated
-from .models import Announcement,AnnouncementComment,AnnouncementLike
+from .models import Announcement,AnnouncementComment,AnnouncementLike, AnnouncementInterested
 from src.apps.group.models import AnnouncementGroup
 from src.apps.common.models import Status
 from src.apps.notification.tasks import announcement_like_unlike_notification
@@ -268,3 +269,26 @@ class AnnouncementLikeView(generics.GenericAPIView):
             announcement_like_unlike_notification.delay(user_like.id, "dislike")
 
         return Response({"msg":serializer.data},status=status.HTTP_200_OK)
+
+
+class AnnouncementInterestedView(generics.GenericAPIView):
+
+    serializer_class = AnnouncementInterestSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        announcement = serializer.validated_data.get("announcement")
+        
+        try:
+            interested = AnnouncementInterested.objects.get(user=user, announcement=announcement)
+            for attr,values in serializer.validated_data.items():
+                setattr(interested, attr, values)
+                interested.save()
+        except AnnouncementInterested.DoesNotExist:
+            # Create a new interest object
+            serializer.save()
+
+        return Response({"msg": serializer.data}, status=status.HTTP_200_OK)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Announcement,AnnouncementComment,AnnouncementLike
+from .models import Announcement,AnnouncementComment,AnnouncementLike,AnnouncementInterested
 from src.apps.common.utills import SpamWordDetect
 from src.apps.common.models import Status
 from src.apps.notification.tasks import announcement_creation_notification, announcement_comment_notification
@@ -203,4 +203,12 @@ class AnnouncementLikeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AnnouncementLike
+        fields = '__all__'
+
+
+class AnnouncementInterestSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    class Meta:
+        model = AnnouncementInterested
         fields = '__all__'
