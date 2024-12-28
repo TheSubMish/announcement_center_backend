@@ -160,6 +160,24 @@ class AnnouncementGroupSerializer(DynamicSerializer):
     def get_admin_id(self, obj):
         return obj.admin.id if obj.admin else None
     
+    def get_rated_group(self, obj):
+        if self.context.get('request').user.is_authenticated:
+            self.user = self.context.get('request').user
+            if Rating.objects.filter(group=obj,user=self.user).exists():
+                return True
+        return False
+    
+
+    def rating(self, obj):
+        if self.context.get('request').user.is_authenticated:
+            self.user = self.context.get('request').user
+            if Rating.objects.filter(group=obj,user=self.user).exists():
+                return Rating.objects.get(group=obj,user=self.user).rating
+            else:
+                return None
+        else:
+            return None
+    
 class JoinAnnouncementGroupSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     invite_code = serializers.CharField(max_length=10,allow_blank=True,required=False)
