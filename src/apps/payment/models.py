@@ -28,4 +28,4 @@ class GroupPayment(BaseModel):
     )
 
     def __str__(self):
-        return f"Payment for Group {self.group.name if self.group else "unknown"} by {self.user.username if self.user else "unknown"}"
+        return f"Payment for Group {self.group.name if self.group else 'unknown'} by {self.user.username if self.user else 'unknown'}"

@@ -124,6 +124,8 @@ class AnnouncementGroupSerializer(DynamicSerializer):
     category = serializers.StringRelatedField()
     admin = serializers.StringRelatedField()
     admin_id = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField()
+    rated_group = serializers.SerializerMethodField()
 
     class Meta:
         model = AnnouncementGroup
@@ -142,6 +144,8 @@ class AnnouncementGroupSerializer(DynamicSerializer):
             'code_expires_at',
             'average_rating',
             'joined',
+            'rating',
+            'rated_group',
             'created_at',
             'updated_at',
         )
@@ -168,7 +172,7 @@ class AnnouncementGroupSerializer(DynamicSerializer):
         return False
     
 
-    def rating(self, obj):
+    def get_rating(self, obj):
         if self.context.get('request').user.is_authenticated:
             self.user = self.context.get('request').user
             if Rating.objects.filter(group=obj,user=self.user).exists():
