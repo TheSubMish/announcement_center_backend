@@ -6,6 +6,7 @@ from .views import (
     GroupRateAnalyticsView,
     GroupMemberStatusView,
     AnnouncementImpressionView,
+    AnnouncementImpressionCountryCityView,
     AnnouncementLikeDislikeView,
 )
 
@@ -16,5 +17,6 @@ urlpatterns = [
     path('group/<uuid:pk>/rate/', GroupRateAnalyticsView.as_view(), name='group-rate-api'),
     path('group/<uuid:pk>/member/status/', GroupMemberStatusView.as_view(), name='group-member-status-api'),
     path('announcement/<uuid:pk>/impression/', AnnouncementImpressionView.as_view(), name='announcement-impression-api'),
+    path('announcement/<uuid:pk>/impression/country-city/', AnnouncementImpressionCountryCityView.as_view(), name='announcement-impression-country-city-api'),   
     path('announcement/<uuid:pk>/like-dislike/', AnnouncementLikeDislikeView.as_view(), name='announcement-like-dislike-api'),
 ]

@@ -387,6 +387,63 @@ class AnnouncementImpressionView(generics.GenericAPIView):
         return Response(serializer.data)
 
 
+class AnnouncementImpressionCountryCityView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        announcement_id = kwargs.get('pk')
+
+        try:
+            announcement = Announcement.objects.get(pk=announcement_id)
+
+            if not announcement.group.premium_group:
+                return Response({'error': 'You do not have permission'}, status=status.HTTP_403_FORBIDDEN)
+            
+            if not GroupMember.objects.filter(
+                group=announcement.group,
+                user=request.user,
+                role__in=["admin", "moderator"]
+            ).exists():
+                return Response({'error': 'You do not have permission'}, status=status.HTTP_403_FORBIDDEN)
+            
+        except Announcement.DoesNotExist:
+            return Response({'error': 'Announcement does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # type: country or city
+        # now get all from all data after defence filter using date range
+        type = self.request.query_params.get("type", None) # type: ignore
+
+        if type not in ["country", "Country", "city", "City"]:
+            return Response({'error': 'Invalid type'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if type == "country" or type == "Country":
+            # Query to count impressions per country
+            impressions_per_country = (
+                AnnouncementImpression.objects
+                .filter(announcement=announcement)
+                .annotate(label=F('country'))  # Alias 'country' as 'label'
+                .values('label')  # Use the alias 'label'
+                .annotate(count=Count('id'))
+                .order_by('-count')
+            )
+            serializer = CountryCitySerializer(impressions_per_country, many=True)
+        
+        if type == "city" or type == "City":
+            # Query to count impressions per city
+            impressions_per_city = (
+                AnnouncementImpression.objects
+                .filter(announcement=announcement)
+                .annotate(label=F('city'))  # Alias 'city' as 'label'
+                .values('label')  # Use the alias 'label'
+                .annotate(count=Count('id'))
+                .order_by('-count')
+            )
+            serializer = CountryCitySerializer(impressions_per_city, many=True)
+        
+        return Response(serializer.data)
+
+
+
 class AnnouncementLikeDislikeView(APIView):
 
     def get(self,request, *args, **kwargs):
