@@ -323,14 +323,14 @@ class AnnouncementImpressionView(generics.GenericAPIView):
         try:
             announcement = Announcement.objects.get(pk=announcement_id)
             if not announcement.group.premium_group:
-                return Response({'error': 'You do not have permission'}, status=403)
+                return Response({'error': 'You do not have permission','group_id':announcement.group.pk}, status=403)
             
             if not GroupMember.objects.filter(
                 group=announcement.group,
                 user=request.user,
                 role__in=["admin", "moderator"]
             ).exists():
-                return Response({'error': 'You do not have permission'}, status=403)
+                return Response({'error': 'You do not have permission','group_id':announcement.group.pk}, status=403)
             
         except AnnouncementGroup.DoesNotExist:
             return Response({'error': 'Announcement group does not exist'}, status=404)
@@ -397,14 +397,14 @@ class AnnouncementImpressionCountryCityView(APIView):
             announcement = Announcement.objects.get(pk=announcement_id)
 
             if not announcement.group.premium_group:
-                return Response({'error': 'You do not have permission'}, status=status.HTTP_403_FORBIDDEN)
+                return Response({'error': 'You do not have permission','group_id':announcement.group.pk}, status=status.HTTP_403_FORBIDDEN)
             
             if not GroupMember.objects.filter(
                 group=announcement.group,
                 user=request.user,
                 role__in=["admin", "moderator"]
             ).exists():
-                return Response({'error': 'You do not have permission'}, status=status.HTTP_403_FORBIDDEN)
+                return Response({'error': 'You do not have permission','group_id':announcement.group.pk}, status=status.HTTP_403_FORBIDDEN)
             
         except Announcement.DoesNotExist:
             return Response({'error': 'Announcement does not exist'}, status=status.HTTP_400_BAD_REQUEST)
@@ -452,14 +452,14 @@ class AnnouncementLikeDislikeView(APIView):
         try:
             announcement = Announcement.objects.get(pk=announcement_id)
             if not announcement.group.premium_group:
-                return Response({'error': 'You do not have permission'}, status=403)
+                return Response({'error': 'You do not have permission','group_id':announcement.group.pk}, status=403)
             
             if not GroupMember.objects.filter(
                 group=announcement.group,
                 user=request.user,
                 role__in=["admin", "moderator"]
             ).exists():
-                return Response({'error': 'You do not have permission'}, status=403)
+                return Response({'error': 'You do not have permission','group_id':announcement.group.pk}, status=403)
             
         except AnnouncementGroup.DoesNotExist:
             return Response({'error': 'Announcement group does not exist'}, status=404)
