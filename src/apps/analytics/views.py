@@ -218,6 +218,7 @@ class GroupRateAnalyticsView(APIView):
         return Response(serializer.data)
 
 class GroupMemberStatusView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = ImpressionSerializer
 
     def get(self, request, *args, **kwargs):
@@ -315,6 +316,7 @@ class GroupMemberStatusView(generics.GenericAPIView):
 
 
 class AnnouncementImpressionView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = ImpressionSerializer
 
     def get(self, request, *args, **kwargs):
@@ -445,6 +447,7 @@ class AnnouncementImpressionCountryCityView(APIView):
 
 
 class AnnouncementLikeDislikeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
 
     def get(self,request, *args, **kwargs):
         announcement_id = kwargs.get('pk')
@@ -522,3 +525,77 @@ class AnnouncementLikeDislikeView(APIView):
         }
 
         return Response(data)
+
+
+class AnnouncementCommentAnalyticsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ImpressionSerializer
+
+    def get(self, request, *args, **kwargs):
+        announcement_id = kwargs.get('pk')
+
+        try:
+            announcement = Announcement.objects.get(pk=announcement_id)
+            if not announcement.group.premium_group:
+                return Response({'error': 'You do not have permission','group_id':announcement.group.pk}, status=403)
+            
+            if not GroupMember.objects.filter(
+                group=announcement.group,
+                user=request.user,
+                role__in=["admin", "moderator"]
+            ).exists():
+                return Response({'error': 'You do not have permission','group_id':announcement.group.pk}, status=403)
+            
+        except AnnouncementGroup.DoesNotExist:
+            return Response({'error': 'Announcement group does not exist'}, status=404)
+
+        range = self.request.query_params.get("range", None) # type: ignore
+        if range is None:
+            return Response({'error': 'range is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        today = timezone.now()
+        
+        if range == "this_week":
+            # Calculate the date 7 days ago
+            last_date = today - timedelta(days=7)
+
+        if range == "this_month":
+            # Calculate the date 30 days ago
+            last_date = today - timedelta(days=30)
+
+        if range == "3 months":
+            # Calculate the date 90 days ago
+            last_date = today - timedelta(days=90)
+
+        if range == "all_time":
+            # Calculate the date 0 days ago
+            last_date = timezone.datetime(1970, 1, 1)
+
+        # Generate all dates in the range
+        all_dates = []
+        current_date = last_date
+        while current_date.replace(tzinfo=None) <= today.replace(tzinfo=None):
+            all_dates.append(current_date.date())
+            current_date += timedelta(days=1)
+
+        # Query to count impressions per day
+        comments = (
+            AnnouncementComment.objects
+            .filter(announcement=announcement,created_at__gte=last_date, created_at__lte=today)
+            .annotate(date=TruncDate('created_at'))
+            .values('date')
+            .annotate(count=Count('id'))
+            .order_by('date')
+        )
+
+        # Transform the impressions queryset into a dictionary
+        commments_dict = {item['date']: item['count'] for item in comments}
+
+        # Fill missing dates with count 0
+        filled_comments = [
+            {'date': date, 'count': commments_dict.get(date, 0)}
+            for date in all_dates
+        ]
+        serializer = ImpressionSerializer(filled_comments, many=True)
+        
+        return Response(serializer.data)

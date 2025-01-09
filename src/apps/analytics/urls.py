@@ -8,6 +8,7 @@ from .views import (
     AnnouncementImpressionView,
     AnnouncementImpressionCountryCityView,
     AnnouncementLikeDislikeView,
+    AnnouncementCommentAnalyticsView,
 )
 
 
@@ -19,4 +20,5 @@ urlpatterns = [
     path('announcement/<uuid:pk>/impression/', AnnouncementImpressionView.as_view(), name='announcement-impression-api'),
     path('announcement/<uuid:pk>/impression/country-city/', AnnouncementImpressionCountryCityView.as_view(), name='announcement-impression-country-city-api'),   
     path('announcement/<uuid:pk>/like-dislike/', AnnouncementLikeDislikeView.as_view(), name='announcement-like-dislike-api'),
+    path('announcement/<uuid:pk>/comment/', AnnouncementCommentAnalyticsView.as_view(), name='announcement-comment-analytics-api'),
 ]
