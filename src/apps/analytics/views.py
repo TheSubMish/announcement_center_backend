@@ -489,6 +489,13 @@ class AnnouncementLikeDislikeView(APIView):
             # Calculate the date 0 days ago
             last_date = timezone.datetime(1970, 1, 1)
 
+        # Generate all dates in the range
+        all_dates = []
+        current_date = last_date
+        while current_date.replace(tzinfo=None) <= today.replace(tzinfo=None):
+            all_dates.append(current_date.date())
+            current_date += timedelta(days=1)
+
         likes = (
             AnnouncementLike.objects.filter(
                 announcement=announcement,
@@ -496,13 +503,22 @@ class AnnouncementLikeDislikeView(APIView):
                 created_at__lte=today,
                 like=True
             )
-            .annotate(day=TruncDate('created_at'))
-            .values('date')
+            .annotate(date=TruncDate('created_at'))
+            .values('date')  # Converts queryset to a list of dictionaries
             .annotate(count=Count('id'))
             .order_by('date')
         )
 
-        like_serializer = AnnouncementLikeDislikeSerializer(likes)
+        # Transform the impressions queryset into a dictionary
+        likes_dict = {item['date']: item['count'] for item in likes}
+
+        # Fill missing dates with count 0
+        filled_likes = [
+            {'date': date, 'count': likes_dict.get(date, 0)}
+            for date in all_dates
+        ]
+
+        like_serializer = AnnouncementLikeDislikeSerializer(filled_likes, many=True)
 
         dislikes = (
             AnnouncementLike.objects.filter(
@@ -511,13 +527,22 @@ class AnnouncementLikeDislikeView(APIView):
                 created_at__lte=today,
                 like=True
             )
-            .annotate(day=TruncDate('created_at'))
+            .annotate(date=TruncDate('created_at'))
             .values('date')
             .annotate(count=Count('id'))
             .order_by('date')
         )
 
-        dislike_serializer = AnnouncementLikeDislikeSerializer(dislikes)
+        # Transform the impressions queryset into a dictionary
+        dislikes_dict = {item['date']: item['count'] for item in dislikes}
+
+        # Fill missing dates with count 0
+        filled_dislikes = [
+            {'date': date, 'count': dislikes_dict.get(date, 0)}
+            for date in all_dates
+        ]
+
+        dislike_serializer = AnnouncementLikeDislikeSerializer(filled_dislikes,many=True)
 
         data = {
             "likes": like_serializer.data,
