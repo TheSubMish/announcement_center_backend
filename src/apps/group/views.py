@@ -20,6 +20,7 @@ from .permissions import (
 )
 from .filters import AnnouncementGroupFilter
 from .models import AnnouncementGroup,Rating,GroupMember,GroupType,Category
+from .util import recommend_groups_for_user
 from src.apps.common.models import Status
 from src.apps.analytics.models import GroupImpression
 from src.apps.notification.tasks import group_rating_notification, group_join_leave_kick_notification
@@ -179,7 +180,11 @@ class ListAnnouncementGroupView(generics.ListAPIView):
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         
-        queryset = self.get_queryset()
+        if request.user.is_authenticated:
+            queryset = recommend_groups_for_user(request.user)
+        else:
+            queryset = self.get_queryset()
+            
         filtered_queryset = self.filter_queryset(queryset)
 
         if self.pagination_class:
