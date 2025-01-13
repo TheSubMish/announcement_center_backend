@@ -241,7 +241,7 @@ class RetrieveAnnouncementGroupView(generics.RetrieveAPIView):
         
         GroupImpression.objects.create(
             group=announcement_group,
-            user=self.request.user,
+            user=self.request.user if self.request.user.is_authenticated else None,
             country = (user_ip.country if user_ip.country else "unknown"),
             city = (user_ip.city if user_ip.city else "unknown"), 
         )
