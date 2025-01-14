@@ -34,6 +34,10 @@ class PaymentRequestView(generics.GenericAPIView):
 
         try:
             group = AnnouncementGroup.objects.get(group_id=request.data.get('group',None))
+            # remove after defense
+            group.premium_group = True
+            group.save()
+
         except AnnouncementGroup.DoesNotExist:
             return Response({'error': 'Group does not exist'}, status=status.HTTP_404_NOT_FOUND)
         
